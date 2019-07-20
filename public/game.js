@@ -336,7 +336,7 @@ function updatePlayer (player, isLocal) {
     player.vel.x = 0
   }
 
-  updatePlayerAxis(player, 'y', keys.down, keys.up, skyXVel)
+  updatePlayerAxis(player, 'y', keys.down, keys.up, skyYVel)
   player.pos.y += player.vel.y
   
   const collidingTileY = getCollidingTiles(player.pos)

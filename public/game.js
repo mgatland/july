@@ -1,18 +1,18 @@
 'use strict'
 
+import { editor } from './editor.js'
+
 let debugMode = false
 window.editMode = false
-
-import { editor } from './editor.js'
 
 const storageKey = 'temp'
 
 let frame = 0
-let send = undefined
+let send
 let netState = {}
 const shots = []
 const ents = []
-let localId = undefined
+let localId
 
 const player = {
   pos: { x: 90, y: 50 },
@@ -24,23 +24,71 @@ const player = {
   fireTimer: 0,
   refireRate: 6,
   ammo: 0,
-  maxAmmo: 100
+  maxAmmo: 100,
+  health: 0,
+  maxHealth: 100
 }
 player.ammo = player.maxAmmo
+player.health = player.maxHealth
 
-const testEnemy = {
-  pos: { x: 40, y: 40 },
-  vel: { x: 0, y: 0},
-  fireTimer: 0,
-  refireRate: 23,
-  facingLeft: false,
-  fireMode: 'star',
+class Enemy {
+  constructor (x, y) {
+    this.pos = { x, y }
+    this.vel = { x: 0, y: 0 }
+    this.fireTimer = 0
+    this.refireRate = 60
+    this.facingLeft = false
+    this.fireMode = 'star'
+    this.moveTimer = 0
+    this.maxMoveTimer = 90
+    this.fireSequence = 0
+    this.health = 100
+    this.maxHealth = 100
+  }
+  move () {
+    if (this.fireTimer > 0) this.fireTimer--
+    if (this.fireTimer === 0) {
+      spawnShot(this)
+      this.fireTimer = this.refireRate
+    }
+  }
 }
 
-ents.push(testEnemy)
+class OhRing extends Enemy {
+  constructor (x, y) {
+    super(x, y)
+    this.refireRate = 60
+    this.fireMode = 'star'
+    this.maxMoveTimer = 90
+  }
+  _startRandomMove () {
+    const angle = Math.random() * Math.PI * 2
+    const speed = 0.6
+    this.vel.x = Math.cos(angle) * speed
+    this.vel.y = Math.sin(angle) * speed
+    this.moveTimer = this.maxMoveTimer
+  }
+  move () {
+    if (this.moveTimer > 0) {
+      this.moveTimer--
+    } else {
+      this._startRandomMove()
+    }
+    this.pos.x += this.vel.x
+    this.pos.y += this.vel.y
+    if (getCollidingTiles(this.pos)) {
+      this.pos.x -= this.vel.x
+      this.pos.y -= this.vel.y
+      this._startRandomMove()
+    }
+    super.move()
+  }
+}
+
+ents.push(new OhRing(40, 40))
 
 const camera = {
-  pos: {x: player.pos.x, y: player.pos.y}
+  pos: { x: player.pos.x, y: player.pos.y }
 }
 
 const checkpoints = [
@@ -118,16 +166,58 @@ function tick () {
   requestAnimationFrame(tick)
 }
 
+function isTouching (ent1, ent2) {
+  return distance(ent1.pos, ent2.pos) < tileSize
+}
+
+function distance (pos1, pos2) {
+  const dX = pos1.x - pos2.x
+  const dY = pos1.y - pos2.y
+  return Math.sqrt(dX * dX + dY * dY)
+}
+
+function spawnExplosion (pos) {
+  const p = { x: pos.x, y: pos.y, age: 6, type: 'firework0' }
+  p.xVel = 0
+  p.yVel = 0
+  particles.push(p)
+}
+
+function hurt (ent, amount) {
+  ent.health -= amount
+  if (ent.health <= 0) {
+    ent.health = 0
+    ent.dead = true
+    spawnExplosion(ent.pos)
+  }
+}
+
 function updateShots () {
   for (let shot of shots) {
     shot.pos.x += shot.vel.x
     shot.pos.y += shot.vel.y
+
+    if (shot.hurtsPlayer && isTouching(shot, player)) {
+      hurt(player, 10)
+      spawnExplosion(shot.pos)
+      shot.dead = true
+      continue
+    }
+
+    if (!shot.hurtsPlayer) {
+      for (const ent of ents) {
+        if (isTouching(shot, ent)) {
+          hurt(ent, 10)
+          spawnExplosion(shot.pos)
+          shot.dead = true
+          continue
+        }
+      }
+    }
+
     if (getCollidingTiles(shot.pos)) {
       shot.dead = true
-      const p = {x: shot.pos.x, y: shot.pos.y, age: 6, type: "firework0"}
-      p.xVel = 0
-      p.yVel = 0
-      particles.push(p)
+      spawnExplosion(shot.pos)
     }
   }
   filterInPlace(shots, s => !s.dead)
@@ -135,12 +225,9 @@ function updateShots () {
 
 function updateEnts () {
   for (let ent of ents) {
-    if (ent.fireTimer > 0) ent.fireTimer--
-    if (ent.fireTimer === 0) {
-      spawnShot(ent)
-      ent.fireTimer = ent.refireRate
-    }
+    ent.move()
   }
+  filterInPlace(ents, e => !e.dead)
 }
 
 function updateParticles () {
@@ -212,17 +299,21 @@ function drawHUD () {
   ctx.fillStyle = '#757161'
   ctx.fillRect(0, canvas.height - height, canvas.width, height)
   ctx.fillStyle = backgroundColor
-  const podSize = Math.floor(48 / scale)
-  let x = tileSize * scale * 1.5
-  let y = canvas.height - height / 2
-  for (let i = 0; i < player.maxAmmo / 10; i++) {
-    const sprite = i < player.ammo / 10 ? 16 : 17
-    drawSprite(sprite, x, y, false, true)
-    x += tileSize * scale / 2
+
+  function drawBar (current, max, isLeft, fullSprite, emptySprite) {
+    let x = tileSize * scale * 1.5 + (isLeft ? 0 : canvas.width / 2)
+    let y = canvas.height - height / 2
+    for (let i = 0; i < max / 10; i++) {
+      const sprite = i < current / 10 ? fullSprite : emptySprite
+      drawSprite(sprite, x, y, false, true)
+      x += tileSize * scale / 2
+    }
   }
+  drawBar(player.ammo, player.maxAmmo, true, 16, 17)
+  drawBar(player.health, player.maxHealth, false, 18, 19)
 }
 
-function drawParticle(p) {
+function drawParticle (p) {
   if (p.type === 'ring') drawCheckpoint(p, false, true)
   if (p.type === 'firework0') drawSprite(16, p.x, p.y)
   if (p.type === 'firework1') drawSprite(17, p.x, p.y)
@@ -232,11 +323,10 @@ function drawShot (s) {
   drawSprite(16, s.pos.x, s.pos.y)
 }
 
-function drawPlayer(player) {
-
+function drawPlayer (player) {
   for (let bit of player.trail) {
-    drawCheckpoint(bit, false)     
-   }
+    drawCheckpoint(bit, false)
+  }
 
   let sprite
   if (player.flapAnim < 1) {
@@ -454,38 +544,43 @@ function updatePlayer (player, isLocal) {
   if (isLocal) send(JSON.stringify(player))
 }
 
-function spawnShot (player) {
-  if (!player.fireMode) {
+function spawnShot (ent) {
+  if (!ent.fireMode) {
     const shot = {
-      pos: { x: player.pos.x, y: player.pos.y },
+      pos: { x: ent.pos.x, y: ent.pos.y },
       vel: { x: 0, y: 0 }
     }
-    shot.vel.x = player.facingLeft ? -8 : 8
+    shot.vel.x = ent.facingLeft ? -8 : 8
+    shot.hurtsPlayer = false
     shots.push(shot)
   }
-  if (player.fireMode === 'star') {
+  if (ent.fireMode === 'star') {
     let points = 5
+    const offset = (ent.fireSequence / 16) * Math.PI * 2 / points
     for (let i = 0; i < 5; i++) {
       const shot = {
-        pos: { x: player.pos.x, y: player.pos.y },
+        pos: { x: ent.pos.x, y: ent.pos.y },
         vel: { x: 0, y: 0 }
       }
-      const angle = Math.PI * 2 / points * i
-      shot.vel.x = Math.cos(angle) * 4
-      shot.vel.y = Math.sin(angle) * 4
+      const angle = Math.PI * 2 / points * i + offset
+      const force = 1.4
+      shot.vel.x = Math.cos(angle) * force
+      shot.vel.y = Math.sin(angle) * force
+      shot.hurtsPlayer = true
       shots.push(shot)
     }
+    ent.fireSequence = (ent.fireSequence + 1) % 16
   }
 }
 
-function getDist(pos1, pos2) {
+function getDist (pos1, pos2) {
   const xDist = pos1.x - pos2.x
   const yDist = pos1.y - pos2.y
   const dist = Math.sqrt(xDist * xDist + yDist * yDist)
   return dist
 }
 
-function getAngle(pos1, pos2) {
+function getAngle (pos1, pos2) {
   return Math.atan2(pos2.y - pos1.y, pos2.x - pos1.x)
 }
 

@@ -1,0 +1,25 @@
+2019-07-20
+
+time to GET REAL
+
+we need:
+
+p0:
+[x] health and damage system
+[ ] player destruction \ restart \ something
+[ ] player heal and ammo restore points
+[ ] enemy spawner
+[ ] bat enemy (moves randomly, sometimes chases nearby player)
+[ ] bomber enemy (moves upwards randomly, drops bombs downwards)
+[ ] sine wave movement enemy
+[ ] spiral outwards enemy
+
+p1:
+[ ] a big map with rooms where you face each kind of enemy
+[ ] a goal: the four pieces of megapiece
+[ ] narrative: text and portraits that pop up at key moments
+[ ] sound effects
+[ ] wicked PC speaker music
+
+p2:
+[ ] multiplayer!!!

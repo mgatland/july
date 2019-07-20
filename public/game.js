@@ -5,7 +5,7 @@ window.editMode = false
 
 import { editor } from './editor.js'
 
-const storageKey = 'github.com/mgatland/flap/map'
+const storageKey = 'temp'
 
 let frame = 0
 let send = undefined

@@ -22,8 +22,11 @@ const player = {
   trail: [],
   megaBird: false,
   fireTimer: 0,
-  refireRate: 6
+  refireRate: 6,
+  ammo: 0,
+  maxAmmo: 100
 }
+player.ammo = player.maxAmmo
 
 const testEnemy = {
   pos: { x: 40, y: 40 },
@@ -86,7 +89,7 @@ function start (sendFunc) {
   const defaultFont = "16px 'uni 05_64'"
   const titleFont = "32px 'uni 05_64'"
   ctx.font = defaultFont
-  ctx.fillStyle = '#ccc'
+  ctx.fillStyle = '#140C1C'
   ctx.baseLine = 'bottom'
   spriteImage = new Image()
   spriteImage.src = 'sprites.png'
@@ -151,15 +154,15 @@ function updateParticles () {
       bit.age = 9999
       const density = 7
       for (let i = 0; i < density; i++) {
-        const p = {x: bit.x, y: bit.y, age: 0, type: "firework1"}
+        const p = {x: bit.x, y: bit.y, age: 0, type: 'firework1' }
         const angle = i / density * Math.PI * 2
-        const force = 3
+        const force = 1
         p.xVel = force * Math.cos(angle)
         p.yVel = force * Math.sin(angle)
         particles.push(p)
       }
     }
-    if (bit.type === 'firework1' && bit.age === 7) {
+    if (bit.type === 'firework1' && bit.age === 14) {
       bit.age = 9999
     }
   }
@@ -184,7 +187,7 @@ function filterInPlace(a, condition) {
 
 function draw () {
   ctx.fillRect(0, 0, canvas.width, canvas.height)
-  
+
   drawLevel()
   particles.forEach(p => drawParticle(p, false, true))
   if (!debugMode) drawPlayer(player)
@@ -198,6 +201,24 @@ function draw () {
   }
   for (let ent of ents) {
     drawSprite(8, ent.pos.x, ent.pos.y)
+  }
+  drawHUD()
+}
+
+function drawHUD () {
+  const height = 60
+  const backgroundColor = ctx.fillStyle
+  ctx.fillRect(0, canvas.height - height - scale, canvas.width, scale)
+  ctx.fillStyle = '#757161'
+  ctx.fillRect(0, canvas.height - height, canvas.width, height)
+  ctx.fillStyle = backgroundColor
+  const podSize = Math.floor(48 / scale)
+  let x = tileSize * scale * 1.5
+  let y = canvas.height - height / 2
+  for (let i = 0; i < player.maxAmmo / 10; i++) {
+    const sprite = i < player.ammo / 10 ? 16 : 17
+    drawSprite(sprite, x, y, false, true)
+    x += tileSize * scale / 2
   }
 }
 
@@ -230,13 +251,16 @@ function drawPlayer(player) {
 
 }
 
-function drawSprite (index, x, y, flipped = false) {
+function drawSprite (index, x, y, flipped = false, hud = false) {
   let width = tileSize
   let height = tileSize
-  x = Math.floor((x - camera.pos.x) * scale)
-  y = Math.floor((y - camera.pos.y) * scale)
-  x += Math.floor(canvas.width / 2)
-  y += Math.floor(canvas.height / 2)
+  if (!hud) {
+    const camPos = camera.pos
+    x = Math.floor((x - camPos.x) * scale)
+    y = Math.floor((y - camPos.y) * scale)
+    x += Math.floor(canvas.width / 2)
+    y += Math.floor(canvas.height / 2)
+  }
   ctx.translate(x, y)
   if (flipped) ctx.scale(-1, 1)
 
@@ -354,9 +378,10 @@ function updatePlayer (player, isLocal) {
     camera.pos.x = player.pos.x
     camera.pos.y = player.pos.y
 
-    if (keys.shoot && player.fireTimer == 0) {
+    if (keys.shoot && player.fireTimer === 0 && player.ammo > 0) {
       spawnShot(player)
       player.fireTimer = player.refireRate
+      player.ammo--
     }
     keys.shootHit = false
 
@@ -364,11 +389,12 @@ function updatePlayer (player, isLocal) {
     for (let checkpoint of checkpoints) {
       const xDist = Math.abs(player.pos.x - checkpoint.x * tileSize)
       const yDist = Math.abs(player.pos.y - checkpoint.y * tileSize)
-      const distSqr =  xDist * xDist + yDist * yDist
+      const distSqr = xDist * xDist + yDist * yDist
       const close = (tileSize) * (tileSize)
       if (distSqr < close && !player.checkpoints[checkpoint.id]) {
         player.checkpoints[checkpoint.id] = true
         player.trail.push({x: checkpoint.x * tileSize, y: checkpoint.y * tileSize, xVel: 0, yVel: 0})
+        player.ammo = player.maxAmmo
 
         //Did I win?
         if (checkpoints.every(cp => player.checkpoints[cp.id])) {

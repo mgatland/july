@@ -2,13 +2,12 @@
 
 let storageKey = 'temp'
 let tileSize
-let player
 let world
 let camera
 
 function rleEncode (level) {
   const out = []
-  let prev = undefined
+  let prev
   let amount = 0
   for (const val of level) {
     if (val === prev) {
@@ -28,7 +27,6 @@ function rleEncode (level) {
 }
 
 function rleDecode (levelData) {
-  
   const pairs = levelData.reduce((result, value, index, array) => {
     if (index % 2 === 0) {
       result.push(array.slice(index, index + 2))
@@ -45,7 +43,7 @@ function rleDecode (levelData) {
 }
 
 function saveLevelString (world) {
-  const rleWorld = {... world}
+  const rleWorld = { ...world }
   rleWorld.map = rleEncode(world.map)
   const dataAsString = JSON.stringify(rleWorld)
   /*  const dataEl = document.querySelector('.levelData')
@@ -61,7 +59,6 @@ let brush = 1
 export const editor = {
   startEditor: function startEditor (canvas, scale, newWorld, newTileSize, newPlayer, newStorageKey, newCamera) {
     storageKey = newStorageKey
-    player = newPlayer
     tileSize = newTileSize
     world = newWorld
     camera = newCamera
@@ -103,7 +100,7 @@ export const editor = {
       '5': 1,
       '6': 1,
       '7': 1,
-      '8': 1,
+      '8': 1
     }
 
     window.addEventListener('keydown', function (e) {

@@ -92,16 +92,16 @@ const camera = {
 }
 
 const checkpoints = [
-  {id: 1, x: 3.5, y: 3.5},
-  {id: 2, x: 21.5, y: 5.5},
-  {id: 3, x: 33.5, y: 2.5},
-  {id: 4, x: 45.5, y: 12.5},
-  {id: 5, x: 36.5, y: 42.5},
-  {id: 6, x: 36.5, y: 36.5},
-  {id: 7, x: 18.5, y: 45.5},
-  {id: 8, x: 3.5, y: 42.5},
-  {id: 9, x: 18.5, y: 36.5},
-  {id: 0, x: 25.5, y: 23.5},
+  { id: 1, x: 3.5, y: 3.5 },
+  { id: 2, x: 21.5, y: 5.5 },
+  { id: 3, x: 33.5, y: 2.5 },
+  { id: 4, x: 45.5, y: 12.5 },
+  { id: 5, x: 36.5, y: 42.5 },
+  { id: 6, x: 36.5, y: 36.5 },
+  { id: 7, x: 18.5, y: 45.5 },
+  { id: 8, x: 3.5, y: 42.5 },
+  { id: 9, x: 18.5, y: 36.5 },
+  { id: 0, x: 25.5, y: 23.5 }
 ]
 
 const particles = []
@@ -125,10 +125,9 @@ if (savedMap) {
   console.log(savedMap)
 } else {
   world =
-  {  "width": 50,  "height": 50,  "map": [null,0,1,51,0,48,1,2,0,48,1,2,0,48,1,2,0,10,7,1,0,21,6,1,0,15,1,2,0,32,6,1,0,15,1,2,0,4,7,1,0,24,6,7,0,12,1,2,0,48,1,2,0,19,7,1,0,28,1,2,0,48,1,2,0,41,6,4,0,3,1,2,0,48,1,2,0,6,6,6,0,36,1,2,0,47,6,1,1,2,0,41,7,4,0,3,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,23,6,2,0,23,1,2,0,24,6,2,0,22,1,2,0,25,6,2,0,21,1,2,0,26,6,2,0,20,1,2,0,27,6,2,0,19,1,2,0,28,6,2,0,18,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,13,7,8,0,14,6,1,0,12,1,2,0,13,7,1,0,6,7,1,0,15,6,1,0,11,1,2,0,20,7,1,0,16,6,1,0,10,1,2,0,20,7,1,0,17,6,1,0,9,1,2,0,20,7,1,0,18,6,1,0,8,1,2,0,13,7,1,0,6,7,1,0,12,6,5,0,10,1,2,0,13,7,1,0,3,7,1,0,2,7,1,0,27,1,2,0,13,7,1,0,6,7,1,0,27,1,2,0,13,7,8,0,27,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,6,2,0,46,1,2,0,48,1,51,0,2  ]}
+  { 'width': 50,  'height': 50,  'map': [null,0,1,51,0,48,1,2,0,48,1,2,0,48,1,2,0,10,7,1,0,21,6,1,0,15,1,2,0,32,6,1,0,15,1,2,0,4,7,1,0,24,6,7,0,12,1,2,0,48,1,2,0,19,7,1,0,28,1,2,0,48,1,2,0,41,6,4,0,3,1,2,0,48,1,2,0,6,6,6,0,36,1,2,0,47,6,1,1,2,0,41,7,4,0,3,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,23,6,2,0,23,1,2,0,24,6,2,0,22,1,2,0,25,6,2,0,21,1,2,0,26,6,2,0,20,1,2,0,27,6,2,0,19,1,2,0,28,6,2,0,18,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,13,7,8,0,14,6,1,0,12,1,2,0,13,7,1,0,6,7,1,0,15,6,1,0,11,1,2,0,20,7,1,0,16,6,1,0,10,1,2,0,20,7,1,0,17,6,1,0,9,1,2,0,20,7,1,0,18,6,1,0,8,1,2,0,13,7,1,0,6,7,1,0,12,6,5,0,10,1,2,0,13,7,1,0,3,7,1,0,2,7,1,0,27,1,2,0,13,7,1,0,6,7,1,0,27,1,2,0,13,7,8,0,27,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,6,2,0,46,1,2,0,48,1,51,0,2] }
 }
 world.map = editor.rleDecode(world.map)
-
 
 function start (sendFunc) {
   canvas = document.querySelector('canvas')
@@ -236,12 +235,12 @@ function updateParticles () {
     bit.y += bit.yVel
     bit.age++
 
-    //fireworks hack
+    // fireworks hack
     if (bit.type === 'firework0' && bit.age === 7) {
       bit.age = 9999
       const density = 7
       for (let i = 0; i < density; i++) {
-        const p = {x: bit.x, y: bit.y, age: 0, type: 'firework1' }
+        const p = { x: bit.x, y: bit.y, age: 0, type: 'firework1' }
         const angle = i / density * Math.PI * 2
         const force = 1
         p.xVel = force * Math.cos(angle)
@@ -255,21 +254,21 @@ function updateParticles () {
   }
 
   filterInPlace(particles, bit => bit.age < 60 * 5)
-
 }
 
-//https://stackoverflow.com/questions/37318808/what-is-the-in-place-alternative-to-array-prototype-filter
-function filterInPlace(a, condition) {
-  let i = 0, j = 0;
+// https://stackoverflow.com/questions/37318808/what-is-the-in-place-alternative-to-array-prototype-filter
+function filterInPlace (a, condition) {
+  let i = 0
+  let j = 0
 
   while (i < a.length) {
-    const val = a[i];
-    if (condition(val, i, a)) a[j++] = val;
-    i++;
+    const val = a[i]
+    if (condition(val, i, a)) a[j++] = val
+    i++
   }
 
-  a.length = j;
-  return a;
+  a.length = j
+  return a
 }
 
 function draw () {
@@ -337,8 +336,7 @@ function drawPlayer (player) {
     sprite = 4
   }
   drawSprite(sprite, player.pos.x, player.pos.y, player.facingLeft)
-  //ctx.strokeText(Math.floor(player.pos.x / tileSize) + ":" + Math.floor(player.pos.y / tileSize), 40, 40)
-
+  // ctx.strokeText(Math.floor(player.pos.x / tileSize) + ":" + Math.floor(player.pos.y / tileSize), 40, 40)
 }
 
 function drawSprite (index, x, y, flipped = false, hud = false) {
@@ -357,7 +355,7 @@ function drawSprite (index, x, y, flipped = false, hud = false) {
   let sX = (index % 8) * width
   let sY = Math.floor(index / 8) * height
 
-  //hack for small sprites
+  // hack for small sprites
   if (index >= 16) {
     const smolIndex = index - 16
     width /= 2
@@ -377,7 +375,7 @@ function drawSprite (index, x, y, flipped = false, hud = false) {
 
 function drawLevel () {
   const level = world.map
-  const center = {x: camera.pos.x / tileSize, y: camera.pos.y / tileSize}
+  const center = { x: camera.pos.x / tileSize, y: camera.pos.y / tileSize }
   const halfWidth = canvas.width / 2 / scale / tileSize
   const halfHeight = canvas.height / 2 / scale / tileSize
   const minY = Math.floor(center.y - halfHeight)
@@ -415,15 +413,13 @@ function updatePlayerAxis (player, axis, moreKey, lessKey, maxVel) {
     } else {
       vel -= Math.min(vel - maxVel, xDecel)
     }
-  }
-  else if (lessKey) {
+  } else if (lessKey) {
     if (vel > -maxVel) {
       vel -= xAccel
     } else {
       vel += Math.min(-vel - maxVel, xDecel)
     }
-  }
-  else if (!lessKey && vel < 0) vel += Math.min(-vel, xDecel)
+  } else if (!lessKey && vel < 0) vel += Math.min(-vel, xDecel)
   else if (!moreKey && vel > 0) vel -= Math.min(vel, xDecel)
 
   player.vel[axis] = vel
@@ -433,7 +429,7 @@ function updatePlayer (player, isLocal) {
 
   const keys = player.keys
   let isTouching = false
- 
+
   if (keys.left) player.facingLeft = true
   if (keys.right) player.facingLeft = false
 
@@ -452,7 +448,7 @@ function updatePlayer (player, isLocal) {
 
   updatePlayerAxis(player, 'y', keys.down, keys.up, skyYVel)
   player.pos.y += player.vel.y
-  
+
   const collidingTileY = getCollidingTiles(player.pos)
   if (collidingTileY !== null) {
     isTouching = true
@@ -475,7 +471,7 @@ function updatePlayer (player, isLocal) {
     }
     keys.shootHit = false
 
-    //checkpoints
+    // checkpoints
     for (let checkpoint of checkpoints) {
       const xDist = Math.abs(player.pos.x - checkpoint.x * tileSize)
       const yDist = Math.abs(player.pos.y - checkpoint.y * tileSize)
@@ -483,10 +479,10 @@ function updatePlayer (player, isLocal) {
       const close = (tileSize) * (tileSize)
       if (distSqr < close && !player.checkpoints[checkpoint.id]) {
         player.checkpoints[checkpoint.id] = true
-        player.trail.push({x: checkpoint.x * tileSize, y: checkpoint.y * tileSize, xVel: 0, yVel: 0})
+        player.trail.push({ x: checkpoint.x * tileSize, y: checkpoint.y * tileSize, xVel: 0, yVel: 0 })
         player.ammo = player.maxAmmo
 
-        //Did I win?
+        // Did I win?
         if (checkpoints.every(cp => player.checkpoints[cp.id])) {
           console.log('you just won the game')
           player.megaBird = true
@@ -496,7 +492,7 @@ function updatePlayer (player, isLocal) {
   }
 
   if (player.megaBird && frame % 10 === 0) {
-    const p = {x: player.pos.x, y: player.pos.y, age: 0, type: "firework0"}
+    const p = { x: player.pos.x, y: player.pos.y, age: 0, type: 'firework0' }
     const angle = (frame / 10) / 12 * Math.PI * 2
     const force = 1.4
     p.xVel = force * Math.cos(angle)
@@ -509,7 +505,7 @@ function updatePlayer (player, isLocal) {
     console.log('coins lost: ' + player.trail.length)
     for (let bit of player.trail) {
       particles.push(bit)
-      bit.type = "ring"
+      bit.type = 'ring'
       bit.age = 0
       bit.xVel *= 2
       bit.yVel *= 2
@@ -523,12 +519,12 @@ function updatePlayer (player, isLocal) {
   if (isLocal) {
     if (player.trail.length > 0) {
       if (isTouching) {
-        player.lostCoins = true //for network updates
+        player.lostCoins = true // for network updates
       }
     }
   }
   if (player.trail.length > 0) {
-    let pos = {... player.pos}
+    let pos = { ... player.pos }
     for (let bit of player.trail) {
       const dist = getDist(bit, pos)
       const angle = getAngle(bit, pos)
@@ -611,7 +607,7 @@ export const game = {
 
 const keys = { left: false, right: false, cheat: false, up: false, down: false, shoot: false, shootHit: false }
 
-//hacks!
+// hacks!
 player.keys = keys
 
 function switchKey (key, state) {
@@ -635,6 +631,7 @@ function switchKey (key, state) {
       break
     case 'q':
       keys.cheat = state
+      break
     case ' ':
     case 'x':
     case '/':

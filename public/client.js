@@ -8,7 +8,7 @@ function showMessage (m) {
 }
 
 async function getPlayerCount () {
-  return await fetch('/playerCount').then(r => r.json())
+  return fetch('/playerCount').then(r => r.json())
 }
 
 async function load () {
@@ -26,21 +26,21 @@ function connect () {
   const prefix = (location.protocol === 'https:') ? 'wss' : 'ws'
 
   ws = new WebSocket(`${prefix}://${location.host}`)
-  ws.onerror = function() {
+  ws.onerror = function () {
     showMessage('WebSocket error')
   }
-  ws.onopen = function() {
+  ws.onopen = function () {
     showMessage('WebSocket connection established')
     const sendFunc = x => ws.send(x)
     game.start(sendFunc)
   }
-  ws.onclose = function() {
+  ws.onclose = function () {
     showMessage('WebSocket connection closed')
   }
   ws.onmessage = function (msg) {
     game.onMessage(JSON.parse(msg.data))
   }
-} 
+}
 
 load()
 connect()

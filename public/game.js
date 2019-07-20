@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 'use strict'
 
 import { editor } from './editor.js'
@@ -124,8 +125,10 @@ if (savedMap) {
   console.warn('Loading map from local storage. This is only for development use.')
   console.log(savedMap)
 } else {
+  /* eslint-disable comma-spacing */
   world =
-  { 'width': 50,  'height': 50,  'map': [null,0,1,51,0,48,1,2,0,48,1,2,0,48,1,2,0,10,7,1,0,21,6,1,0,15,1,2,0,32,6,1,0,15,1,2,0,4,7,1,0,24,6,7,0,12,1,2,0,48,1,2,0,19,7,1,0,28,1,2,0,48,1,2,0,41,6,4,0,3,1,2,0,48,1,2,0,6,6,6,0,36,1,2,0,47,6,1,1,2,0,41,7,4,0,3,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,23,6,2,0,23,1,2,0,24,6,2,0,22,1,2,0,25,6,2,0,21,1,2,0,26,6,2,0,20,1,2,0,27,6,2,0,19,1,2,0,28,6,2,0,18,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,13,7,8,0,14,6,1,0,12,1,2,0,13,7,1,0,6,7,1,0,15,6,1,0,11,1,2,0,20,7,1,0,16,6,1,0,10,1,2,0,20,7,1,0,17,6,1,0,9,1,2,0,20,7,1,0,18,6,1,0,8,1,2,0,13,7,1,0,6,7,1,0,12,6,5,0,10,1,2,0,13,7,1,0,3,7,1,0,2,7,1,0,27,1,2,0,13,7,1,0,6,7,1,0,27,1,2,0,13,7,8,0,27,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,6,2,0,46,1,2,0,48,1,51,0,2] }
+  { 'width': 50, 'height': 50, 'map': [null,0,1,51,0,48,1,2,0,48,1,2,0,48,1,2,0,10,7,1,0,21,6,1,0,15,1,2,0,32,6,1,0,15,1,2,0,4,7,1,0,24,6,7,0,12,1,2,0,48,1,2,0,19,7,1,0,28,1,2,0,48,1,2,0,41,6,4,0,3,1,2,0,48,1,2,0,6,6,6,0,36,1,2,0,47,6,1,1,2,0,41,7,4,0,3,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,23,6,2,0,23,1,2,0,24,6,2,0,22,1,2,0,25,6,2,0,21,1,2,0,26,6,2,0,20,1,2,0,27,6,2,0,19,1,2,0,28,6,2,0,18,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,13,7,8,0,14,6,1,0,12,1,2,0,13,7,1,0,6,7,1,0,15,6,1,0,11,1,2,0,20,7,1,0,16,6,1,0,10,1,2,0,20,7,1,0,17,6,1,0,9,1,2,0,20,7,1,0,18,6,1,0,8,1,2,0,13,7,1,0,6,7,1,0,12,6,5,0,10,1,2,0,13,7,1,0,3,7,1,0,2,7,1,0,27,1,2,0,13,7,1,0,6,7,1,0,27,1,2,0,13,7,8,0,27,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,6,2,0,46,1,2,0,48,1,51,0,2] }
+  /* eslint-enable comma-spacing */
 }
 world.map = editor.rleDecode(world.map)
 
@@ -426,7 +429,6 @@ function updatePlayerAxis (player, axis, moreKey, lessKey, maxVel) {
 }
 
 function updatePlayer (player, isLocal) {
-
   const keys = player.keys
   let isTouching = false
 
@@ -524,7 +526,7 @@ function updatePlayer (player, isLocal) {
     }
   }
   if (player.trail.length > 0) {
-    let pos = { ... player.pos }
+    let pos = { ...player.pos }
     for (let bit of player.trail) {
       const dist = getDist(bit, pos)
       const angle = getAngle(bit, pos)
@@ -588,14 +590,13 @@ function onMessage (msg) {
         netState[id].lostCoins = true
       }
     }
-  }
-  else if (msg.id !== undefined) {
+  } else if (msg.id !== undefined) {
     localId = msg.id
     console.log('got local id: ' + localId)
   } else {
     netState = msg
     for (const id in netState) {
-      //netState[id] = JSON.parse(netState[id])
+      // netState[id] = JSON.parse(netState[id])
     }
   }
 }
@@ -611,7 +612,6 @@ const keys = { left: false, right: false, cheat: false, up: false, down: false, 
 player.keys = keys
 
 function switchKey (key, state) {
-
   switch (key) {
     case 'ArrowLeft':
     case 'a':

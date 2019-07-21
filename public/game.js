@@ -76,7 +76,7 @@ class Enemy {
       this.fireTimer = this.refireRate
     }
     if (this.hurtsOnTouch && distance(this.pos, player.pos) < tileSize) {
-      hurt(player, 10)
+      if (!player.winner) hurt(player, 10)
       hurt(this, 9000)
     }
   }
@@ -154,6 +154,7 @@ class OhRing extends Enemy {
     this.refireRate = 60
     this.fireMode = 'star'
     this.maxMoveTimer = 90
+    this.trash = true
   }
   move () {
     if (this.moveTimer > 0) {
@@ -176,6 +177,7 @@ class BatWing extends Enemy {
   constructor (x, y) {
     super(x, y)
     this.maxMoveTimer = 90
+    this.trash = true
   }
   move () {
     this.sprite = 11 + Math.floor(frame / 6) % 3
@@ -341,6 +343,9 @@ function updateShots () {
 function updateEnts () {
   for (let ent of ents) {
     ent.move()
+    if (ent.trash && (distance(ent.pos, player.pos) > 240)) {
+      ent.dead = true
+    }
   }
   filterInPlace(ents, e => !e.dead)
 }

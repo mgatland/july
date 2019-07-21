@@ -30,10 +30,12 @@ const particleTypes = {
   playerDeadRing: { maxAge: 1, sprite: smallSprite + 4, spawns: [{ type: 'playerDeadPuff', amount: 13, force: 0.75 }, { type: 'playerDeadPuff', amount: 19, force: 0.3 }] },
   expPuff: { maxAge: 14, sprite: smallSprite + 5 },
   expRing: { maxAge: 1, sprite: smallSprite + 5, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] },
-  spawnerDeadPuff: { maxAge: 120, sprite: smallSprite + 7 },
-  spawnerDeadRing: { maxAge: 1, sprite: smallSprite + 7, spawns: [{ type: 'spawnerDeadPuff', amount: 7, force: 0.75 }, { type: 'spawnerDeadPuff', amount: 11, force: 0.3 }] },
-  enemyDeadPuff: { maxAge: 30, sprite: smallSprite + 7 },
-  enemyDeadRing: { maxAge: 1, sprite: smallSprite + 7, spawns: [{ type: 'enemyDeadPuff', amount: 7, force: 1.4 }, { type: 'enemyDeadPuff', amount: 11, force: 0.6 }] }
+  spawnerDeadPuff1: { maxAge: 30, sprite: smallSprite + 7 },
+  spawnerDeadPuff2: { maxAge: 90, sprite: smallSprite + 11 },
+  spawnerDeadRing: { maxAge: 1, sprite: smallSprite + 7, spawns: [{ type: 'spawnerDeadPuff1', amount: 7, force: 1.5 }, { type: 'spawnerDeadPuff1', amount: 5, force: 1 }, { type: 'spawnerDeadPuff2', amount: 11, force: 0.5 }] },
+  enemyDeadPuff1: { maxAge: 25, sprite: smallSprite + 7 },
+  enemyDeadPuff2: { maxAge: 30, sprite: smallSprite + 11 },
+  enemyDeadRing: { maxAge: 1, sprite: smallSprite + 7, spawns: [{ type: 'enemyDeadPuff1', amount: 7, force: 1.5 }, { type: 'enemyDeadPuff2', amount: 11, force: 0.5 }] }
 }
 
 let debugMode = false

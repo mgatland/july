@@ -435,7 +435,7 @@ function drawHUD () {
   const sOffset = (player.healthBarFlashTimer > 0 && Math.floor(player.healthBarFlashTimer / 10) % 2 === 0) ? 8 : 2
   drawBar(player.health, player.maxHealth, false, smallSprite + sOffset, smallSprite + sOffset + 1)
 
-  //Goal text
+  // Goal text
   const signsLeft = ents.filter(s => s.isSign).length
   ctx.fillText('Destroy all signposts! ' + signsLeft + " remain.", 30, canvas.height - 20)
   if (signsLeft === 0) player.winner = true
@@ -638,14 +638,14 @@ function updatePlayer (player, isLocal) {
     }
   }
 
-  /*if (player.megaBird && frame % 10 === 0) {
+  /* if (player.megaBird && frame % 10 === 0) {
     const p = { x: player.pos.x, y: player.pos.y, age: 0, type: 'firework0' }
     const angle = (frame / 10) / 12 * Math.PI * 2
     const force = 1.4
     p.xVel = force * Math.cos(angle)
     p.yVel = force * Math.sin(angle)
     particles.push(p)
-  }*/
+  } */
 
   if (player.lostCoins) {
     player.checkpoints = {}
@@ -753,6 +753,11 @@ export const game = {
   onMessage: onMessage
 }
 
+/**
+ * Returns true if you should preventDefault
+ * @param {*} key 
+ * @param {*} state 
+ */
 function switchKey (key, state) {
   switch (key) {
     case 'ArrowLeft':
@@ -780,16 +785,21 @@ function switchKey (key, state) {
       if (!keys.shoot && state === true) keys.shootHit = true
       keys.shoot = state
       break
+    case 'l':
+      // hack for cheatmode
+      if (state === false && keys.cheat) {
+        player.cheatMode = !player.cheatMode
+      }
+      break
+    default:
+      return false
   }
-
-  // hack for cheatmode
-  if (state === false && keys.cheat && key === 'l') {
-    player.cheatMode = !player.cheatMode
-  }
+  return true
 }
 
 window.addEventListener('keydown', function (e) {
-  switchKey(e.key, true)
+  const preventDefault = switchKey(e.key, true)
+  if (preventDefault) e.preventDefault()
 })
 
 window.addEventListener('keyup', function (e) {
@@ -847,7 +857,7 @@ function restart () {
       const y = Math.floor(i / world.width) + 0.5
       const sprite = level[i]
       if (sprite === 8) {
-        checkpoints.push({id:cId++, x, y})
+        checkpoints.push({ id: cId++, x, y })
       }
       if (sprite === 2) {
         ents.push(new OhSpawner(x * tileSize, y * tileSize))

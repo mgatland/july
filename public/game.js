@@ -27,7 +27,11 @@ const particleTypes = {
   playerDeadPuff: { maxAge: 300, sprite: 20 },
   playerDeadRing: { maxAge: 1, sprite: 20, spawns: [{ type: 'playerDeadPuff', amount: 13, force: 0.75 }, { type: 'playerDeadPuff', amount: 19, force: 0.3 }] },
   expPuff: { maxAge: 7, sprite: 21 },
-  expRing: { maxAge: 1, sprite: 21, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] }
+  expRing: { maxAge: 1, sprite: 21, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] },
+  spawnerDeadPuff: { maxAge: 120, sprite: 23 },
+  spawnerDeadRing: { maxAge: 1, sprite: 23, spawns: [{ type: 'spawnerDeadPuff', amount: 7, force: 0.75 }, { type: 'spawnerDeadPuff', amount: 11, force: 0.3 }] },
+  enemyDeadPuff: { maxAge: 30, sprite: 23 },
+  enemyDeadRing: { maxAge: 1, sprite: 23, spawns: [{ type: 'enemyDeadPuff', amount: 7, force: 1.4 }, { type: 'enemyDeadPuff', amount: 11, force: 0.6 }] }
 }
 
 let debugMode = false
@@ -51,21 +55,54 @@ class Enemy {
     this.pos = { x, y }
     this.vel = { x: 0, y: 0 }
     this.fireTimer = 0
-    this.refireRate = 60
+    this.refireRate = 0
     this.facingLeft = false
     this.fireMode = 'star'
     this.moveTimer = 0
     this.maxMoveTimer = 90
     this.fireSequence = 0
-    this.health = 100
-    this.maxHealth = 100
+    this.health = 30
+    this.maxHealth = 30
+    this.sprite = 2
+    this.deadEffect = 'enemyDeadRing'
   }
   move () {
     if (this.fireTimer > 0) this.fireTimer--
-    if (this.fireTimer === 0) {
+    if (this.fireTimer === 0 && this.refireRate > 0) {
       spawnShot(this)
       this.fireTimer = this.refireRate
     }
+  }
+  inActiveRange () {
+    return distance(this.pos, player.pos) < tileSize * 7
+  }
+  draw () {
+    drawSprite(this.sprite, this.pos.x, this.pos.y)
+  }
+}
+
+class OhSpawner extends Enemy {
+  constructor (x, y) {
+    super(x, y)
+    this.maxSpawnTimer = 60
+    this.spawnTimer = this.maxSpawnTimer
+    this.health = 200
+    this.maxHealth = 200
+    this.deadEffect = 'spawnerDeadRing'
+  }
+  move () {
+    this.sprite = Math.floor(frame / 15) % 2 === 0 ? 3 : 4
+    if (!this.inActiveRange()) {
+      return
+    }
+    if (this.spawnTimer > 0) {
+      this.spawnTimer--
+      if (this.spawnTimer === 0) {
+        this.spawnTimer = this.maxSpawnTimer
+        if (ents.length < maxEnts) ents.push(new OhRing(this.pos.x, this.pos.y))
+      }
+    }
+    super.move()
   }
 }
 
@@ -119,6 +156,7 @@ const checkpoints = [
 
 const particles = []
 
+const maxEnts = 30
 const skyXVel = 3
 const skyYVel = 2
 
@@ -210,7 +248,7 @@ function hurt (ent, amount) {
     if (ent.isPlayer) {
       spawnExplosion(ent.pos, 'playerDeadRing')
     } else {
-      spawnExplosion(ent.pos)
+      spawnExplosion(ent.pos, ent.deadEffect)
     }
   }
 }
@@ -219,6 +257,7 @@ function updateShots () {
   for (let shot of shots) {
     shot.pos.x += shot.vel.x
     shot.pos.y += shot.vel.y
+    shot.age++
 
     if (shot.hurtsPlayer && isTouching(shot, player)) {
       hurt(player, 10)
@@ -235,6 +274,11 @@ function updateShots () {
           shot.dead = true
           continue
         }
+      }
+      if (shot.age > tileSize * 8 / Math.abs(shot.vel.x)) {
+        spawnExplosion(shot.pos)
+        shot.dead = true
+        continue
       }
     }
 
@@ -312,7 +356,7 @@ function draw () {
     drawShot(shot)
   }
   for (let ent of ents) {
-    drawSprite(8, ent.pos.x, ent.pos.y)
+    ent.draw()
   }
   drawHUD()
 }
@@ -354,14 +398,7 @@ function drawPlayer (player) {
   }
 
   if (!player.dead) {
-    let sprite
-    if (player.flapAnim < 1) {
-      sprite = 2
-    } else if (player.flapAnim < 4) {
-      sprite = 3
-    } else {
-      sprite = 4
-    }
+    let sprite = 5
     drawSprite(sprite, player.pos.x, player.pos.y, player.facingLeft)
     // ctx.strokeText(Math.floor(player.pos.x / tileSize) + ":" + Math.floor(player.pos.y / tileSize), 40, 40)
   }
@@ -589,6 +626,7 @@ function spawnShot (ent) {
     }
     shot.vel.x = ent.facingLeft ? -8 : 8
     shot.hurtsPlayer = false
+    shot.age = 0
     shots.push(shot)
   }
   if (ent.fireMode === 'star') {
@@ -604,6 +642,7 @@ function spawnShot (ent) {
       shot.vel.x = Math.cos(angle) * force
       shot.vel.y = Math.sin(angle) * force
       shot.hurtsPlayer = true
+      shot.age = 0
       shots.push(shot)
     }
     ent.fireSequence = (ent.fireSequence + 1) % 16
@@ -730,7 +769,7 @@ function restart () {
   player = new Player(90, 90)
   player.keys = keys
 
-  ents.push(new OhRing(40, 40))
+  ents.push(new OhSpawner(40, 40))
 }
 
 restart()

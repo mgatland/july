@@ -3,6 +3,33 @@
 
 import { editor } from './editor.js'
 
+class Player {
+  constructor (x, y) {
+    this.isPlayer = true
+    this.pos = { x, y }
+    this.vel = { x: 0, y: 0 }
+    this.facingLeft = false
+    this.checkpoints = {}
+    this.trail = []
+    this.megaBird = false
+    this.fireTimer = 0
+    this.refireRate = 6
+    this.ammo = 0
+    this.maxAmmo = 100
+    this.health = 0
+    this.maxHealth = 100
+    this.ammo = this.maxAmmo
+    this.health = this.maxHealth
+  }
+}
+
+const particleTypes = {
+  playerDeadPuff: { maxAge: 300, sprite: 20 },
+  playerDeadRing: { maxAge: 1, sprite: 20, spawns: [{ type: 'playerDeadPuff', amount: 13, force: 0.75 }, { type: 'playerDeadPuff', amount: 19, force: 0.3 }] },
+  expPuff: { maxAge: 7, sprite: 17 },
+  expRing: { maxAge: 1, sprite: 16, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] }
+}
+
 let debugMode = false
 window.editMode = false
 
@@ -15,22 +42,9 @@ const shots = []
 const ents = []
 let localId
 
-const player = {
-  pos: { x: 90, y: 50 },
-  vel: { x: 0, y: 0 },
-  facingLeft: false,
-  checkpoints: {},
-  trail: [],
-  megaBird: false,
-  fireTimer: 0,
-  refireRate: 6,
-  ammo: 0,
-  maxAmmo: 100,
-  health: 0,
-  maxHealth: 100
-}
-player.ammo = player.maxAmmo
-player.health = player.maxHealth
+let player
+
+const keys = { left: false, right: false, cheat: false, up: false, down: false, shoot: false, shootHit: false }
 
 class Enemy {
   constructor (x, y) {
@@ -86,10 +100,8 @@ class OhRing extends Enemy {
   }
 }
 
-ents.push(new OhRing(40, 40))
-
 const camera = {
-  pos: { x: player.pos.x, y: player.pos.y }
+  pos: { x: 0, y: 0 }
 }
 
 const checkpoints = [
@@ -178,19 +190,24 @@ function distance (pos1, pos2) {
   return Math.sqrt(dX * dX + dY * dY)
 }
 
-function spawnExplosion (pos) {
-  const p = { x: pos.x, y: pos.y, age: 6, type: 'firework0' }
+function spawnExplosion (pos, type = 'expRing') {
+  const p = { x: pos.x, y: pos.y, age: 0, type }
   p.xVel = 0
   p.yVel = 0
   particles.push(p)
 }
 
 function hurt (ent, amount) {
+  if (ent.health <= 0) return
   ent.health -= amount
   if (ent.health <= 0) {
     ent.health = 0
     ent.dead = true
-    spawnExplosion(ent.pos)
+    if (ent.isPlayer) {
+      spawnExplosion(ent.pos, 'playerDeadRing')
+    } else {
+      spawnExplosion(ent.pos)  
+    }
   }
 }
 
@@ -234,29 +251,31 @@ function updateEnts () {
 
 function updateParticles () {
   for (let bit of particles) {
+    const type = particleTypes[bit.type]
     bit.x += bit.xVel
     bit.y += bit.yVel
     bit.age++
 
-    // fireworks hack
-    if (bit.type === 'firework0' && bit.age === 7) {
-      bit.age = 9999
-      const density = 7
-      for (let i = 0; i < density; i++) {
-        const p = { x: bit.x, y: bit.y, age: 0, type: 'firework1' }
-        const angle = i / density * Math.PI * 2
-        const force = 1
-        p.xVel = force * Math.cos(angle)
-        p.yVel = force * Math.sin(angle)
-        particles.push(p)
+    if (bit.age >= type.maxAge) {
+      bit.dead = true
+      if (type.spawns) {
+        for (let spawns of type.spawns) {
+          const amount = spawns.amount
+          const newType = spawns.type
+          const force = spawns.force
+          for (let i = 0; i < amount; i++) {
+            const p = { x: bit.x, y: bit.y, age: 0, type: newType }
+            const angle = i / amount * Math.PI * 2
+            p.xVel = force * Math.cos(angle)
+            p.yVel = force * Math.sin(angle)
+            particles.push(p)
+          }
+        }
       }
-    }
-    if (bit.type === 'firework1' && bit.age === 14) {
-      bit.age = 9999
     }
   }
 
-  filterInPlace(particles, bit => bit.age < 60 * 5)
+  filterInPlace(particles, bit => !bit.dead)
 }
 
 // https://stackoverflow.com/questions/37318808/what-is-the-in-place-alternative-to-array-prototype-filter
@@ -316,9 +335,9 @@ function drawHUD () {
 }
 
 function drawParticle (p) {
-  if (p.type === 'ring') drawCheckpoint(p, false, true)
-  if (p.type === 'firework0') drawSprite(16, p.x, p.y)
-  if (p.type === 'firework1') drawSprite(17, p.x, p.y)
+  const type = particleTypes[p.type]
+  //if (p.type. === 'ring') drawCheckpoint(p, false, true)
+  drawSprite(type.sprite, p.x, p.y)
 }
 
 function drawShot (s) {
@@ -330,16 +349,18 @@ function drawPlayer (player) {
     drawCheckpoint(bit, false)
   }
 
-  let sprite
-  if (player.flapAnim < 1) {
-    sprite = 2
-  } else if (player.flapAnim < 4) {
-    sprite = 3
-  } else {
-    sprite = 4
+  if (!player.dead) {
+    let sprite
+    if (player.flapAnim < 1) {
+      sprite = 2
+    } else if (player.flapAnim < 4) {
+      sprite = 3
+    } else {
+      sprite = 4
+    }
+    drawSprite(sprite, player.pos.x, player.pos.y, player.facingLeft)
+    // ctx.strokeText(Math.floor(player.pos.x / tileSize) + ":" + Math.floor(player.pos.y / tileSize), 40, 40)
   }
-  drawSprite(sprite, player.pos.x, player.pos.y, player.facingLeft)
-  // ctx.strokeText(Math.floor(player.pos.x / tileSize) + ":" + Math.floor(player.pos.y / tileSize), 40, 40)
 }
 
 function drawSprite (index, x, y, flipped = false, hud = false) {
@@ -429,6 +450,15 @@ function updatePlayerAxis (player, axis, moreKey, lessKey, maxVel) {
 }
 
 function updatePlayer (player, isLocal) {
+
+  if (player.dead) {
+    if (isLocal) {
+      player.deadTimer = player.deadTimer ? player.deadTimer + 1 : 1
+      if (player.deadTimer > 60 * 5) restart()
+    }
+    return
+  }
+
   const keys = player.keys
   let isTouching = false
 
@@ -493,21 +523,21 @@ function updatePlayer (player, isLocal) {
     }
   }
 
-  if (player.megaBird && frame % 10 === 0) {
+  /*if (player.megaBird && frame % 10 === 0) {
     const p = { x: player.pos.x, y: player.pos.y, age: 0, type: 'firework0' }
     const angle = (frame / 10) / 12 * Math.PI * 2
     const force = 1.4
     p.xVel = force * Math.cos(angle)
     p.yVel = force * Math.sin(angle)
     particles.push(p)
-  }
+  }*/
 
   if (player.lostCoins) {
     player.checkpoints = {}
     console.log('coins lost: ' + player.trail.length)
     for (let bit of player.trail) {
       particles.push(bit)
-      bit.type = 'ring'
+      bit.type = 'expPuff'
       bit.age = 0
       bit.xVel *= 2
       bit.yVel *= 2
@@ -606,11 +636,6 @@ export const game = {
   onMessage: onMessage
 }
 
-const keys = { left: false, right: false, cheat: false, up: false, down: false, shoot: false, shootHit: false }
-
-// hacks!
-player.keys = keys
-
 function switchKey (key, state) {
   switch (key) {
     case 'ArrowLeft':
@@ -687,3 +712,16 @@ function getCollidingTiles (pos) {
   }
   return null
 }
+
+function restart () {
+  frame = 0
+  shots.length = 0
+  ents.length = 0
+  // netState
+  player = new Player(90, 90)
+  player.keys = keys
+
+  ents.push(new OhRing(40, 40))
+}
+
+restart()

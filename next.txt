@@ -11,9 +11,9 @@ p0:
 [x] enemy spawner
 [x] bat enemy (moves randomly)
 
-[ ] touching enemies must hurt you
-[ ] bats should chase you sometimes 10% chance
-[ ] remove limited ammo, make spinner instantly restore health and flash health bar
+[x] touching enemies must hurt you
+--- [ ] bats should chase you sometimes 10% chance
+[x] remove limited ammo, make spinner instantly restore health and flash health bar
 
 [ ] bomber enemy (moves upwards randomly, drops bombs downwards)
 [ ] sine wave movement enemy

@@ -54,6 +54,7 @@ function saveLevelString (world) {
   console.log(rleDecode(rleWorld.map))
 }
 
+
 let brush = 1
 
 export const editor = {
@@ -94,12 +95,12 @@ export const editor = {
 
     const brushes = {
       '1': 1,
-      '2': 2,
-      '3': 3,
-      '4': 4,
-      '5': 5,
-      '6': 6,
-      '7': 7,
+      '2': 6,
+      '3': 7,
+      '4': 16,
+      '5': 17,
+      '6': 2,
+      '7': 15,
       '8': 8
     }
 

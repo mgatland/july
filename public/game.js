@@ -67,12 +67,17 @@ class Enemy {
     this.maxHealth = 30
     this.sprite = 2
     this.deadEffect = 'enemyDeadRing'
+    this.hurtsOnTouch = true
   }
   move () {
     if (this.fireTimer > 0) this.fireTimer--
     if (this.fireTimer === 0 && this.refireRate > 0) {
       spawnShot(this)
       this.fireTimer = this.refireRate
+    }
+    if (this.hurtsOnTouch && distance(this.pos, player.pos) < tileSize) {
+      hurt(player, 10)
+      hurt(this, 9000)
     }
   }
   _startRandomMove () {
@@ -99,6 +104,7 @@ class OhSpawner extends Enemy {
     this.maxHealth = 200
     this.deadEffect = 'spawnerDeadRing'
     this.baseSprite = 3
+    this.hurtsOnTouch = false
   }
   spawn () {
     ents.push(new OhRing(this.pos.x, this.pos.y))
@@ -128,6 +134,19 @@ class BatSpawner extends OhSpawner {
     ents.push(new BatWing(this.pos.x, this.pos.y))
   }
 }
+
+class SignPost extends Enemy {
+  constructor (x, y) {
+    super(x, y)
+    this.sprite = 17
+    this.hurtsOnTouch = false
+    this.isSign = true
+  }
+  move () {
+    super.move()
+  }
+}
+
 
 class OhRing extends Enemy {
   constructor (x, y) {
@@ -181,16 +200,6 @@ const camera = {
 }
 
 const checkpoints = [
-  { id: 1, x: 3.5, y: 3.5 },
-  { id: 2, x: 21.5, y: 5.5 },
-  { id: 3, x: 33.5, y: 2.5 },
-  { id: 4, x: 45.5, y: 12.5 },
-  { id: 5, x: 36.5, y: 42.5 },
-  { id: 6, x: 36.5, y: 36.5 },
-  { id: 7, x: 18.5, y: 45.5 },
-  { id: 8, x: 3.5, y: 42.5 },
-  { id: 9, x: 18.5, y: 36.5 },
-  { id: 0, x: 25.5, y: 23.5 }
 ]
 
 const particles = []
@@ -216,7 +225,8 @@ if (savedMap) {
 } else {
   /* eslint-disable comma-spacing */
   world =
-  { 'width': 50, 'height': 50, 'map': [null,0,1,51,0,48,1,2,0,48,1,2,0,48,1,2,0,10,7,1,0,21,6,1,0,15,1,2,0,32,6,1,0,15,1,2,0,4,7,1,0,24,6,7,0,12,1,2,0,48,1,2,0,19,7,1,0,28,1,2,0,48,1,2,0,41,6,4,0,3,1,2,0,48,1,2,0,6,6,6,0,36,1,2,0,47,6,1,1,2,0,41,7,4,0,3,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,23,6,2,0,23,1,2,0,24,6,2,0,22,1,2,0,25,6,2,0,21,1,2,0,26,6,2,0,20,1,2,0,27,6,2,0,19,1,2,0,28,6,2,0,18,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,13,7,8,0,14,6,1,0,12,1,2,0,13,7,1,0,6,7,1,0,15,6,1,0,11,1,2,0,20,7,1,0,16,6,1,0,10,1,2,0,20,7,1,0,17,6,1,0,9,1,2,0,20,7,1,0,18,6,1,0,8,1,2,0,13,7,1,0,6,7,1,0,12,6,5,0,10,1,2,0,13,7,1,0,3,7,1,0,2,7,1,0,27,1,2,0,13,7,1,0,6,7,1,0,27,1,2,0,13,7,8,0,27,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,6,2,0,46,1,2,0,48,1,51,0,2] }
+  //{ 'width': 50, 'height': 50, 'map': [null,0,1,51,0,48,1,2,0,48,1,2,0,48,1,2,0,10,7,1,0,21,6,1,0,15,1,2,0,32,6,1,0,15,1,2,0,4,7,1,0,24,6,7,0,12,1,2,0,48,1,2,0,19,7,1,0,28,1,2,0,48,1,2,0,41,6,4,0,3,1,2,0,48,1,2,0,6,6,6,0,36,1,2,0,47,6,1,1,2,0,41,7,4,0,3,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,23,6,2,0,23,1,2,0,24,6,2,0,22,1,2,0,25,6,2,0,21,1,2,0,26,6,2,0,20,1,2,0,27,6,2,0,19,1,2,0,28,6,2,0,18,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,13,7,8,0,14,6,1,0,12,1,2,0,13,7,1,0,6,7,1,0,15,6,1,0,11,1,2,0,20,7,1,0,16,6,1,0,10,1,2,0,20,7,1,0,17,6,1,0,9,1,2,0,20,7,1,0,18,6,1,0,8,1,2,0,13,7,1,0,6,7,1,0,12,6,5,0,10,1,2,0,13,7,1,0,3,7,1,0,2,7,1,0,27,1,2,0,13,7,1,0,6,7,1,0,27,1,2,0,13,7,8,0,27,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,0,48,1,2,6,2,0,46,1,2,0,48,1,51,0,2] }
+  { 'width': 50, 'height': 50, 'map': [6,13,1,37,7,1,0,11,7,1,0,36,1,1,7,1,0,11,7,1,0,20,8,1,0,15,1,1,7,1,0,11,7,1,0,12,2,1,0,14,2,1,0,8,1,1,7,1,0,11,7,1,0,20,6,1,0,15,1,1,7,1,0,6,15,1,0,4,7,1,0,5,6,1,0,14,6,1,0,15,1,1,7,1,0,11,7,1,0,5,6,1,0,9,7,2,6,7,0,12,1,1,7,1,0,11,7,1,0,5,6,1,17,1,0,8,7,1,0,20,1,1,7,1,0,11,7,1,0,5,6,3,0,7,7,1,0,10,8,1,0,9,1,1,7,1,0,11,7,1,0,15,7,1,0,20,1,1,7,1,0,11,7,1,0,15,7,1,0,10,1,1,0,9,1,1,7,1,0,8,1,2,0,1,7,1,0,6,8,1,0,8,7,1,0,9,1,3,0,8,1,1,7,5,0,2,7,6,0,15,7,1,0,9,1,3,0,8,1,2,0,25,7,3,0,8,1,5,0,6,6,1,1,2,8,1,0,22,7,2,0,2,7,1,0,4,7,16,1,2,0,9,15,1,0,11,7,2,0,4,7,1,0,20,1,2,0,19,7,2,0,6,7,1,0,20,1,3,0,16,7,2,0,8,7,1,0,20,1,4,0,13,7,2,0,10,7,1,0,7,8,1,0,8,2,1,0,3,1,5,0,10,7,2,0,8,6,2,0,2,7,1,0,20,1,2,7,13,0,11,6,2,0,1,7,1,0,20,1,2,0,25,6,2,7,1,0,16,15,1,0,3,1,2,0,26,6,2,0,20,1,2,0,27,6,2,0,7,17,1,0,11,1,2,0,28,6,2,7,14,0,4,1,2,0,28,7,1,0,19,1,2,0,28,7,1,0,19,1,2,0,28,7,1,0,1,2,1,0,17,1,2,0,28,7,1,0,19,1,2,0,27,7,2,0,1,15,1,0,17,1,2,0,27,7,2,0,19,1,2,0,27,7,2,0,10,17,1,0,8,1,2,0,21,7,8,0,6,6,13,1,2,0,13,7,9,0,6,7,1,0,6,6,1,0,12,1,2,0,13,7,1,0,6,7,1,0,7,7,1,0,7,6,1,0,11,1,2,0,20,7,1,0,7,7,1,0,8,6,1,0,10,1,2,0,20,7,1,0,7,7,1,0,6,8,1,0,2,6,1,0,9,1,2,0,20,7,1,0,7,7,1,0,5,17,1,0,4,6,1,0,8,1,2,0,13,7,1,0,6,7,1,0,7,7,1,0,4,6,7,0,8,1,2,0,13,7,1,0,3,7,1,0,2,7,1,0,7,7,1,0,19,1,2,0,13,7,1,0,6,7,1,0,7,7,1,0,19,1,2,0,13,7,8,0,7,7,1,0,16,2,1,0,2,1,2,0,28,7,1,0,5,8,1,0,13,1,2,0,28,7,1,0,19,1,2,0,28,7,1,0,16,15,1,0,2,1,2,0,28,7,1,0,5,6,1,0,13,1,2,0,28,7,1,0,19,1,2,6,2,0,26,7,1,0,19,1,2,0,28,7,1,0,14,17,1,0,4,1,51,0,2]}
   /* eslint-enable comma-spacing */
 }
 world.map = editor.rleDecode(world.map)
@@ -225,8 +235,7 @@ function start (sendFunc) {
   canvas = document.querySelector('canvas')
   ctx = canvas.getContext('2d', { alpha: false })
   ctx.imageSmoothingEnabled = false
-  const defaultFont = "16px 'uni 05_64'"
-  const titleFont = "32px 'uni 05_64'"
+  const defaultFont = "20px 'uni 05_64'"
   ctx.font = defaultFont
   ctx.fillStyle = '#140C1C'
   ctx.baseLine = 'bottom'
@@ -417,8 +426,14 @@ function drawHUD () {
       x += tileSize * scale / 2
     }
   }
-  drawBar(player.ammo, player.maxAmmo, true, smallSprite, smallSprite + 1)
-  drawBar(player.health, player.maxHealth, false, smallSprite + 2, smallSprite + 3)
+  // drawBar(player.ammo, player.maxAmmo, true, smallSprite, smallSprite + 1)
+  const sOffset = (player.healthBarFlashTimer > 0 && Math.floor(player.healthBarFlashTimer / 10) % 2 === 0) ? 8 : 2
+  drawBar(player.health, player.maxHealth, false, smallSprite + sOffset, smallSprite + sOffset + 1)
+
+  //Goal text
+  const signsLeft = ents.filter(s => s.isSign).length
+  ctx.fillText('Destroy all signposts! ' + signsLeft + " remain.", 30, canvas.height - 20)
+  if (signsLeft === 0) player.winner = true
 }
 
 function drawParticle (p) {
@@ -477,6 +492,8 @@ function drawSprite (index, x, y, flipped = false, hud = false) {
   ctx.translate(-x, -y)
 }
 
+const hiddenSprites = [15, 16, 17, 2, 8]
+
 function drawLevel () {
   const level = world.map
   const center = { x: camera.pos.x / tileSize, y: camera.pos.y / tileSize }
@@ -492,7 +509,11 @@ function drawLevel () {
       const x = (i % world.width) + 0.5
       const y = Math.floor(i / world.width) + 0.5
       const sprite = level[i]
-      drawSprite(sprite, x * tileSize, y * tileSize)
+      if (!window.editMode && hiddenSprites.indexOf(sprite) >= 0) {
+        drawSprite(0, x * tileSize, y * tileSize)
+      } else {
+        drawSprite(sprite, x * tileSize, y * tileSize)
+      }
     }
   }
   for (let checkpoint of checkpoints) {
@@ -504,7 +525,7 @@ function drawCheckpoint (pos, isVacant) {
   const isFast = player.isCharging
   let anim = Math.floor(frame / (isFast ? 6 : 12)) % 4
   if (anim === 3) anim = 1
-  if (isVacant) anim = 3
+  if (isVacant) return
   const sprite = 8 + anim
   drawSprite(sprite, pos.x, pos.y)
 }
@@ -574,7 +595,13 @@ function updatePlayer (player, isLocal) {
   if (player.fireTimer > 0) player.fireTimer--
 
   if (isLocal) {
-    player.isCharging = false
+    if (player.healthBarFlashTimer > 0) {
+      player.healthBarFlashTimer--
+    }
+
+    if (player.winner) {
+      spawnExplosion(player.pos)
+    }
 
     camera.pos.x = player.pos.x
     camera.pos.y = player.pos.y
@@ -582,7 +609,7 @@ function updatePlayer (player, isLocal) {
     if (keys.shoot && player.fireTimer === 0 && player.ammo > 0) {
       spawnShot(player)
       player.fireTimer = player.refireRate
-      player.ammo--
+      // player.ammo--
     }
     keys.shootHit = false
 
@@ -591,13 +618,11 @@ function updatePlayer (player, isLocal) {
       const close = tileSize * 1.5
       const dist = distance(player.pos, tilePosToWorld(checkpoint))
       if (dist < close && !player.checkpoints[checkpoint.id]) {
-        // player.checkpoints[checkpoint.id] = true
+        player.checkpoints[checkpoint.id] = true
         // player.trail.push({ x: checkpoint.x * tileSize, y: checkpoint.y * tileSize, xVel: 0, yVel: 0 })
-        
-        if (player.ammo < player.maxAmmo) {
-          if (frame % 3 === 0) player.ammo++
-          player.isCharging = true
-        }
+
+        player.health = player.maxHealth
+        player.healthBarFlashTimer = 120
 
         /* // Did I win?
         if (checkpoints.every(cp => player.checkpoints[cp.id])) {
@@ -793,7 +818,7 @@ function getCollidingTiles (pos) {
     const tileY = Math.floor(y + yOffset)
     const tileIndex = getIndexFromPixels(tileX, tileY)
     const tile = world.map[tileIndex]
-    if (tile >= 1) {
+    if (tile > 0 && hiddenSprites.indexOf(tile) === -1) {
       return { x: tileX, y: tileY }
     }
   }
@@ -808,8 +833,29 @@ function restart () {
   player = new Player(90, 90)
   player.keys = keys
 
-  ents.push(new OhSpawner(40, 40))
-  ents.push(new BatSpawner(100, 40))
+  const level = world.map
+  let cId = 0
+  for (let tY = 0; tY < world.height; tY++) {
+    for (let tX = 0; tX < world.height; tX++) {
+      const i = tX + tY * world.width
+      const x = (i % world.width) + 0.5
+      const y = Math.floor(i / world.width) + 0.5
+      const sprite = level[i]
+      if (sprite === 8) {
+        checkpoints.push({id:cId++, x, y})
+      }
+      if (sprite === 2) {
+        ents.push(new OhSpawner(x * tileSize, y * tileSize))
+      }
+      if (sprite === 15) {
+        ents.push(new BatSpawner(x * tileSize, y * tileSize))
+      }
+      if (sprite === 17) {
+        ents.push(new SignPost(x * tileSize, y * tileSize))
+      }
+    }
+  }
+  console.log(checkpoints)
 }
 
 restart()

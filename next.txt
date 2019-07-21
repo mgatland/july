@@ -9,7 +9,12 @@ p0:
 [x] player destruction \ restart \ something
 [x] player heal (no) and ammo restore points (yes)
 [x] enemy spawner
-[ ] bat enemy (moves randomly, sometimes chases nearby player)
+[x] bat enemy (moves randomly)
+
+[ ] touching enemies must hurt you
+[ ] bats should chase you sometimes 10% chance
+[ ] remove limited ammo, make spinner instantly restore health and flash health bar
+
 [ ] bomber enemy (moves upwards randomly, drops bombs downwards)
 [ ] sine wave movement enemy
 [ ] spiral outwards enemy

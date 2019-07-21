@@ -3,6 +3,8 @@
 
 import { editor } from './editor.js'
 
+const smallSprite = 24
+
 class Player {
   constructor (x, y) {
     this.isPlayer = true
@@ -24,14 +26,14 @@ class Player {
 }
 
 const particleTypes = {
-  playerDeadPuff: { maxAge: 300, sprite: 20 },
-  playerDeadRing: { maxAge: 1, sprite: 20, spawns: [{ type: 'playerDeadPuff', amount: 13, force: 0.75 }, { type: 'playerDeadPuff', amount: 19, force: 0.3 }] },
-  expPuff: { maxAge: 7, sprite: 21 },
-  expRing: { maxAge: 1, sprite: 21, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] },
-  spawnerDeadPuff: { maxAge: 120, sprite: 23 },
-  spawnerDeadRing: { maxAge: 1, sprite: 23, spawns: [{ type: 'spawnerDeadPuff', amount: 7, force: 0.75 }, { type: 'spawnerDeadPuff', amount: 11, force: 0.3 }] },
-  enemyDeadPuff: { maxAge: 30, sprite: 23 },
-  enemyDeadRing: { maxAge: 1, sprite: 23, spawns: [{ type: 'enemyDeadPuff', amount: 7, force: 1.4 }, { type: 'enemyDeadPuff', amount: 11, force: 0.6 }] }
+  playerDeadPuff: { maxAge: 300, sprite: smallSprite + 4 },
+  playerDeadRing: { maxAge: 1, sprite: smallSprite + 4, spawns: [{ type: 'playerDeadPuff', amount: 13, force: 0.75 }, { type: 'playerDeadPuff', amount: 19, force: 0.3 }] },
+  expPuff: { maxAge: 14, sprite: smallSprite + 5 },
+  expRing: { maxAge: 1, sprite: smallSprite + 5, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] },
+  spawnerDeadPuff: { maxAge: 120, sprite: smallSprite + 7 },
+  spawnerDeadRing: { maxAge: 1, sprite: smallSprite + 7, spawns: [{ type: 'spawnerDeadPuff', amount: 7, force: 0.75 }, { type: 'spawnerDeadPuff', amount: 11, force: 0.3 }] },
+  enemyDeadPuff: { maxAge: 30, sprite: smallSprite + 7 },
+  enemyDeadRing: { maxAge: 1, sprite: smallSprite + 7, spawns: [{ type: 'enemyDeadPuff', amount: 7, force: 1.4 }, { type: 'enemyDeadPuff', amount: 11, force: 0.6 }] }
 }
 
 let debugMode = false
@@ -73,6 +75,13 @@ class Enemy {
       this.fireTimer = this.refireRate
     }
   }
+  _startRandomMove () {
+    const angle = Math.random() * Math.PI * 2
+    const speed = 0.6
+    this.vel.x = Math.cos(angle) * speed
+    this.vel.y = Math.sin(angle) * speed
+    this.moveTimer = this.maxMoveTimer
+  }
   inActiveRange () {
     return distance(this.pos, player.pos) < tileSize * 7
   }
@@ -89,9 +98,13 @@ class OhSpawner extends Enemy {
     this.health = 200
     this.maxHealth = 200
     this.deadEffect = 'spawnerDeadRing'
+    this.baseSprite = 3
+  }
+  spawn () {
+    ents.push(new OhRing(this.pos.x, this.pos.y))
   }
   move () {
-    this.sprite = Math.floor(frame / 15) % 2 === 0 ? 3 : 4
+    this.sprite = this.baseSprite + Math.floor(frame / 15) % 2
     if (!this.inActiveRange()) {
       return
     }
@@ -99,10 +112,20 @@ class OhSpawner extends Enemy {
       this.spawnTimer--
       if (this.spawnTimer === 0) {
         this.spawnTimer = this.maxSpawnTimer
-        if (ents.length < maxEnts) ents.push(new OhRing(this.pos.x, this.pos.y))
+        if (ents.length < maxEnts) this.spawn()
       }
     }
     super.move()
+  }
+}
+
+class BatSpawner extends OhSpawner {
+  constructor (x, y) {
+    super(x, y)
+    this.baseSprite = 14
+  }
+  spawn () {
+    ents.push(new BatWing(this.pos.x, this.pos.y))
   }
 }
 
@@ -113,14 +136,30 @@ class OhRing extends Enemy {
     this.fireMode = 'star'
     this.maxMoveTimer = 90
   }
-  _startRandomMove () {
-    const angle = Math.random() * Math.PI * 2
-    const speed = 0.6
-    this.vel.x = Math.cos(angle) * speed
-    this.vel.y = Math.sin(angle) * speed
-    this.moveTimer = this.maxMoveTimer
+  move () {
+    if (this.moveTimer > 0) {
+      this.moveTimer--
+    } else {
+      this._startRandomMove()
+    }
+    this.pos.x += this.vel.x
+    this.pos.y += this.vel.y
+    if (getCollidingTiles(this.pos)) {
+      this.pos.x -= this.vel.x
+      this.pos.y -= this.vel.y
+      this._startRandomMove()
+    }
+    super.move()
+  }
+}
+
+class BatWing extends Enemy {
+  constructor (x, y) {
+    super(x, y)
+    this.maxMoveTimer = 90
   }
   move () {
+    this.sprite = 11 + Math.floor(frame / 6) % 3
     if (this.moveTimer > 0) {
       this.moveTimer--
     } else {
@@ -378,8 +417,8 @@ function drawHUD () {
       x += tileSize * scale / 2
     }
   }
-  drawBar(player.ammo, player.maxAmmo, true, 16, 17)
-  drawBar(player.health, player.maxHealth, false, 18, 19)
+  drawBar(player.ammo, player.maxAmmo, true, smallSprite, smallSprite + 1)
+  drawBar(player.health, player.maxHealth, false, smallSprite + 2, smallSprite + 3)
 }
 
 function drawParticle (p) {
@@ -389,7 +428,7 @@ function drawParticle (p) {
 }
 
 function drawShot (s) {
-  drawSprite(s.hurtsPlayer ? 16 : 22, s.pos.x, s.pos.y)
+  drawSprite(s.hurtsPlayer ? smallSprite : smallSprite + 6, s.pos.x, s.pos.y)
 }
 
 function drawPlayer (player) {
@@ -421,12 +460,12 @@ function drawSprite (index, x, y, flipped = false, hud = false) {
   let sY = Math.floor(index / 8) * height
 
   // hack for small sprites
-  if (index >= 16) {
-    const smolIndex = index - 16
+  if (index >= smallSprite) {
+    const smolIndex = index - smallSprite
     width /= 2
     height /= 2
     sX = smolIndex * width
-    sY = 32
+    sY = 48
   }
 
   ctx.drawImage(spriteImage,
@@ -770,6 +809,7 @@ function restart () {
   player.keys = keys
 
   ents.push(new OhSpawner(40, 40))
+  ents.push(new BatSpawner(100, 40))
 }
 
 restart()

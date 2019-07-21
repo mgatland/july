@@ -26,8 +26,8 @@ class Player {
 const particleTypes = {
   playerDeadPuff: { maxAge: 300, sprite: 20 },
   playerDeadRing: { maxAge: 1, sprite: 20, spawns: [{ type: 'playerDeadPuff', amount: 13, force: 0.75 }, { type: 'playerDeadPuff', amount: 19, force: 0.3 }] },
-  expPuff: { maxAge: 7, sprite: 17 },
-  expRing: { maxAge: 1, sprite: 16, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] }
+  expPuff: { maxAge: 7, sprite: 21 },
+  expRing: { maxAge: 1, sprite: 21, spawns: [{ type: 'expPuff', amount: 6, force: 1 }] }
 }
 
 let debugMode = false
@@ -190,6 +190,10 @@ function distance (pos1, pos2) {
   return Math.sqrt(dX * dX + dY * dY)
 }
 
+function tilePosToWorld (tilePos) {
+  return { x: tilePos.x * tileSize, y: tilePos.y * tileSize }
+}
+
 function spawnExplosion (pos, type = 'expRing') {
   const p = { x: pos.x, y: pos.y, age: 0, type }
   p.xVel = 0
@@ -206,7 +210,7 @@ function hurt (ent, amount) {
     if (ent.isPlayer) {
       spawnExplosion(ent.pos, 'playerDeadRing')
     } else {
-      spawnExplosion(ent.pos)  
+      spawnExplosion(ent.pos)
     }
   }
 }
@@ -341,7 +345,7 @@ function drawParticle (p) {
 }
 
 function drawShot (s) {
-  drawSprite(16, s.pos.x, s.pos.y)
+  drawSprite(s.hurtsPlayer ? 16 : 22, s.pos.x, s.pos.y)
 }
 
 function drawPlayer (player) {
@@ -420,7 +424,8 @@ function drawLevel () {
   }
 }
 
-function drawCheckpoint (pos, isVacant, isFast = false) {
+function drawCheckpoint (pos, isVacant) {
+  const isFast = player.isCharging
   let anim = Math.floor(frame / (isFast ? 6 : 12)) % 4
   if (anim === 3) anim = 1
   if (isVacant) anim = 3
@@ -450,7 +455,6 @@ function updatePlayerAxis (player, axis, moreKey, lessKey, maxVel) {
 }
 
 function updatePlayer (player, isLocal) {
-
   if (player.dead) {
     if (isLocal) {
       player.deadTimer = player.deadTimer ? player.deadTimer + 1 : 1
@@ -492,7 +496,10 @@ function updatePlayer (player, isLocal) {
   }
 
   if (player.fireTimer > 0) player.fireTimer--
+
   if (isLocal) {
+    player.isCharging = false
+
     camera.pos.x = player.pos.x
     camera.pos.y = player.pos.y
 
@@ -505,20 +512,22 @@ function updatePlayer (player, isLocal) {
 
     // checkpoints
     for (let checkpoint of checkpoints) {
-      const xDist = Math.abs(player.pos.x - checkpoint.x * tileSize)
-      const yDist = Math.abs(player.pos.y - checkpoint.y * tileSize)
-      const distSqr = xDist * xDist + yDist * yDist
-      const close = (tileSize) * (tileSize)
-      if (distSqr < close && !player.checkpoints[checkpoint.id]) {
-        player.checkpoints[checkpoint.id] = true
-        player.trail.push({ x: checkpoint.x * tileSize, y: checkpoint.y * tileSize, xVel: 0, yVel: 0 })
-        player.ammo = player.maxAmmo
+      const close = tileSize * 1.5
+      const dist = distance(player.pos, tilePosToWorld(checkpoint))
+      if (dist < close && !player.checkpoints[checkpoint.id]) {
+        // player.checkpoints[checkpoint.id] = true
+        // player.trail.push({ x: checkpoint.x * tileSize, y: checkpoint.y * tileSize, xVel: 0, yVel: 0 })
+        
+        if (player.ammo < player.maxAmmo) {
+          if (frame % 3 === 0) player.ammo++
+          player.isCharging = true
+        }
 
-        // Did I win?
+        /* // Did I win?
         if (checkpoints.every(cp => player.checkpoints[cp.id])) {
           console.log('you just won the game')
           player.megaBird = true
-        }
+        } */
       }
     }
   }

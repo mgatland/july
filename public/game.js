@@ -219,7 +219,7 @@ let spriteImage
 
 let savedMap = localStorage.getItem(storageKey)
 let world = savedMap ? JSON.parse(savedMap) : {}
-if (savedMap) {
+if (savedMap && false) {
   console.warn('Loading map from local storage. This is only for development use.')
   console.log(savedMap)
 } else {

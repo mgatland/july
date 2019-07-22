@@ -4,6 +4,7 @@
 import { editor } from './editor.js'
 
 const smallSprite = 24
+let spawnerId = 0
 
 class Player {
   constructor (x, y) {
@@ -55,16 +56,17 @@ let player
 const keys = { left: false, right: false, cheat: false, up: false, down: false, shoot: false, shootHit: false }
 
 class Enemy {
-  constructor (x, y) {
+  constructor (x, y, parentId = -1) {
     this.pos = { x, y }
     this.vel = { x: 0, y: 0 }
+    this.parentId = parentId
     this.fireTimer = 0
     this.refireRate = 0
     this.facingLeft = false
     this.fireMode = 'star'
     this.moveTimer = 0
     this.maxMoveTimer = 90
-    this.fireSequence = 0
+    this.fireSequence = frame % 16
     this.health = 30
     this.maxHealth = 30
     this.sprite = 2
@@ -100,16 +102,17 @@ class Enemy {
 class OhSpawner extends Enemy {
   constructor (x, y) {
     super(x, y)
-    this.maxSpawnTimer = 60
+    this.maxSpawnTimer = 15
     this.spawnTimer = this.maxSpawnTimer
     this.health = 200
     this.maxHealth = 200
     this.deadEffect = 'spawnerDeadRing'
     this.baseSprite = 3
     this.hurtsOnTouch = false
+    this.spawnerId = spawnerId++
   }
   spawn () {
-    ents.push(new OhRing(this.pos.x, this.pos.y))
+    ents.push(new OhRing(this.pos.x, this.pos.y, this.spawnerId))
   }
   move () {
     this.sprite = this.baseSprite + Math.floor(frame / 15) % 2
@@ -120,7 +123,11 @@ class OhSpawner extends Enemy {
       this.spawnTimer--
       if (this.spawnTimer === 0) {
         this.spawnTimer = this.maxSpawnTimer
-        if (ents.length < maxEnts) this.spawn()
+        this.spawn()
+        const childCount = ents.filter(e => !e.dead && e.parentId === this.spawnerId).length
+        if (childCount > 5) this.spawnTimer *= 2
+        if (childCount > 12) this.spawnTimer *= 2
+        if (childCount > 20) this.spawnTimer *= 2
       }
     }
     super.move()
@@ -133,7 +140,7 @@ class BatSpawner extends OhSpawner {
     this.baseSprite = 14
   }
   spawn () {
-    ents.push(new BatWing(this.pos.x, this.pos.y))
+    ents.push(new BatWing(this.pos.x, this.pos.y, this.spawnerId))
   }
 }
 
@@ -151,12 +158,13 @@ class SignPost extends Enemy {
 
 
 class OhRing extends Enemy {
-  constructor (x, y) {
-    super(x, y)
-    this.refireRate = 60
+  constructor (x, y, sId) {
+    super(x, y, sId)
+    this.refireRate = 120
     this.fireMode = 'star'
     this.maxMoveTimer = 90
     this.trash = true
+    this.fireTimer = this.refireRate / 2
   }
   move () {
     if (this.moveTimer > 0) {
@@ -176,8 +184,8 @@ class OhRing extends Enemy {
 }
 
 class BatWing extends Enemy {
-  constructor (x, y) {
-    super(x, y)
+  constructor (x, y, sId) {
+    super(x, y, sId)
     this.maxMoveTimer = 90
     this.trash = true
   }
@@ -208,7 +216,6 @@ const checkpoints = [
 
 const particles = []
 
-const maxEnts = 30
 const skyXVel = 3
 const skyYVel = 2
 
@@ -709,7 +716,7 @@ function spawnShot (ent) {
         vel: { x: 0, y: 0 }
       }
       const angle = Math.PI * 2 / points * i + offset
-      const force = 1.4
+      const force = 1
       shot.vel.x = Math.cos(angle) * force
       shot.vel.y = Math.sin(angle) * force
       shot.hurtsPlayer = true

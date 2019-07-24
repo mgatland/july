@@ -93,8 +93,14 @@ class Enemy {
       hurt(this, 9000)
     }
   }
-  _startRandomMove () {
-    const angle = Math.random() * Math.PI * 2
+  _startRandomMove (chasePlayer) {
+    let angle
+    if (chasePlayer && !player.dead && Math.random() > 0.9) {
+      angle = getAngle(this.pos, player.pos)
+    } else {
+      angle = Math.random() * Math.PI * 2
+    } 
+
     const speed = 0.6
     this.vel.x = Math.cos(angle) * speed
     this.vel.y = Math.sin(angle) * speed
@@ -203,7 +209,7 @@ class BatWing extends Enemy {
     if (this.moveTimer > 0) {
       this.moveTimer--
     } else {
-      this._startRandomMove()
+      this._startRandomMove(true)
     }
     this.pos.x += this.vel.x
     this.pos.y += this.vel.y
@@ -1016,7 +1022,7 @@ function drawEndCard () {
   printLine(pos); pos.char += blankLineCharDelay * 2 // Slow down next line
   printLine(pos, `I don't want to clean factories.`, 'child')
   printLine(pos)
-  printLine(pos, `That's okay, honey. You'll do something else.`)
+  printLine(pos, `That's okay, honey. You can do something else.`)
   pos.char += blankLineCharDelay * 2 // Extra delay before the end message
   state.active = (pos.char > pos.charLimit)
   if (!state.active) printCardTip('END')
@@ -1037,7 +1043,7 @@ function printLine (pos, text, speaker) {
     pos.char += blankLineCharDelay
     pos.y += lineHeight
     if (state.page === 'endCard') {
-      //Hack to make the end page fit: blank lines are narrower
+      // Hack to make the end page fit: blank lines are narrower
       pos.y -= 2
     }
   }

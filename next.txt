@@ -12,6 +12,7 @@ Updates after the game jam:
 [x] sound
 
 [ ] remove multiplayer 'ghosts
+[ ] music?
 
 2019-07-20
 

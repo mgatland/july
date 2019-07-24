@@ -1,13 +1,13 @@
 @font-face {
-	font-family: "uni 05_64";
-	src: url("./uni0564-webfont.woff");
+	font-family: "uni 05_53";
+	src: url("./uni0553-webfont.woff");
 }
 
 html, body { 
   margin: 0; 
 	width:  100%;
 	height: 100%;
-	font-family: "uni 05_64";
+	font-family: "uni 05_53";
 	color: white;
 }
 

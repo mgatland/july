@@ -4,7 +4,7 @@
 import { editor } from './editor.js'
 
 const smallSprite = 24
-let spawnerId = 0
+const fontSize = 24
 
 class Player {
   constructor (x, y) {
@@ -52,6 +52,9 @@ const ents = []
 let localId
 
 let player
+
+let spawnerId = 0
+let state = { page: 'intro', active: true, introChar: 0 }
 
 const keys = { left: false, right: false, cheat: false, up: false, down: false, shoot: false, shootHit: false }
 
@@ -156,7 +159,6 @@ class SignPost extends Enemy {
   }
 }
 
-
 class OhRing extends Enemy {
   constructor (x, y, sId) {
     super(x, y, sId)
@@ -246,7 +248,7 @@ function start (sendFunc) {
   canvas = document.querySelector('canvas')
   ctx = canvas.getContext('2d', { alpha: false })
   ctx.imageSmoothingEnabled = false
-  const defaultFont = "20px 'uni 05_64'"
+  const defaultFont = fontSize + "px 'uni 05_53'"
   ctx.font = defaultFont
   ctx.fillStyle = '#140C1C'
   ctx.baseLine = 'bottom'
@@ -263,16 +265,27 @@ function loaded () {
 
 function tick () {
   frame = (++frame % 3600)
-  updatePlayer(player, keys)
-  for (let id in netState) {
-    if (id != localId || debugMode) {
-      updatePlayer(netState[id], false)
+  if (state.page === 'intro') {
+    if (frame % 1 === 0) state.introChar++
+    if (keys.shootHit) {
+      if (state.active) {
+        state.introChar = Number.MAX_SAFE_INTEGER
+      } else {
+        state.page = 'inGame'
+      }
     }
+    keys.shootHit = false
+  } else {
+    updatePlayer(player, keys)
+    for (let id in netState) {
+      if (id != localId || debugMode) {
+        updatePlayer(netState[id], false)
+      }
+    }
+    updateShots()
+    updateEnts()
+    updateParticles()
   }
-  updateShots()
-  updateEnts()
-  updateParticles()
-  keys.flap = false // special case
   draw()
   requestAnimationFrame(tick)
 }
@@ -404,6 +417,10 @@ function filterInPlace (a, condition) {
 }
 
 function draw () {
+  if (state.page === 'intro') {
+    drawIntroCard()
+    return
+  }
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
   drawLevel()
@@ -446,8 +463,11 @@ function drawHUD () {
 
   // Goal text
   const signsLeft = ents.filter(s => s.isSign).length
-  ctx.fillText('Destroy all signposts! ' + signsLeft + " remain.", 30, canvas.height - 20)
-  if (signsLeft === 0) player.winner = true
+  const creaturesLeft = ents.length - signsLeft
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'bottom'
+  const textHeight = canvas.height - (height / 2 - fontSize / 2)
+  ctx.fillText(`Evidence remaining: ${creaturesLeft} creatures, ${signsLeft} signs.`, tileSize * scale, textHeight)
 }
 
 function drawParticle (p) {
@@ -615,6 +635,8 @@ function updatePlayer (player, isLocal) {
 
     if (player.winner) {
       spawnExplosion(player.pos)
+    } else {
+      if (ents.length === 0) player.winner = true
     }
 
     camera.pos.x = player.pos.x
@@ -854,7 +876,7 @@ function restart () {
   shots.length = 0
   ents.length = 0
   // netState
-  player = new Player(90, 90)
+  player = new Player(2 * tileSize, 2 * tileSize)
   player.keys = keys
 
   const level = world.map
@@ -883,3 +905,39 @@ function restart () {
 }
 
 restart()
+
+function drawIntroCard () {
+  const tileSizePx = tileSize * scale
+  ctx.fillStyle = '#140C1C'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  const pos = { x: tileSizePx * 1.5, y: tileSizePx * 1.5, charLimit: state.introChar, char: 0 }
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  printLine(pos, `Honey, we couldn't find a babysitter so you'll have to come\nto work with me.`)
+  printLine(pos)
+  printLine(pos, `Are we going in the spaceship?`, 'child')
+  printLine(pos)
+  printLine(pos, `Yes! We're going to go to an old factory, and I'll shoot\neverything that's in there. Then we can go get dinner.`)
+  printLine(pos)
+  printLine(pos, `Okay!`, 'child')
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'bottom'
+  const hint = (pos.char > pos.charLimit) ? 'Press space bar to skip' : 'Press space bar'
+  state.active = (pos.char > pos.charLimit)
+  printLine({ x: canvas.width - tileSizePx, y: canvas.height - tileSizePx, char: 0, charLimit: 9999 }, hint, 'child')
+}
+
+function printLine (pos, text, speaker) {
+  if (text) {
+    if (text.includes('\n')) {
+      text.split('\n').forEach(t => printLine(pos, t, speaker))
+      return
+    }
+    ctx.fillStyle = (speaker === 'child') ? '#deeed6' : '#dad45e'
+    ctx.fillText(text.substr(0, pos.charLimit - pos.char), pos.x, pos.y)
+    pos.char += text.length
+  } else {
+    pos.char += 130 // delay for blank lines
+  }
+  pos.y += 32
+}

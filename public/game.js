@@ -342,6 +342,9 @@ function hurt (ent, amount) {
       playSound('exp2')
     }
   }
+  if (ent.isPlayer) {
+    player.healthBarFlashTimer = 60
+  }
 }
 
 function updateShots () {
@@ -484,7 +487,7 @@ function drawHUD () {
   }
   // drawBar(player.ammo, player.maxAmmo, true, smallSprite, smallSprite + 1)
   const sOffset = (player.healthBarFlashTimer > 0 && Math.floor(player.healthBarFlashTimer / 10) % 2 === 0) ? 8 : 2
-  drawBar(player.health, player.maxHealth, false, smallSprite + sOffset, smallSprite + sOffset + 1)
+  drawBar(player.health, player.maxHealth, false, smallSprite + sOffset + 1, smallSprite + sOffset)
 
   // Goal text
   const signsLeft = ents.filter(s => s.isSign).length

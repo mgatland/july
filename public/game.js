@@ -5,6 +5,8 @@ import { editor } from './editor.js'
 
 const smallSprite = 24
 const fontSize = 24
+const lineHeight = 32
+const blankLineCharDelay = 130
 
 class Player {
   constructor (x, y) {
@@ -54,7 +56,7 @@ let localId
 let player
 
 let spawnerId = 0
-let state = { page: 'intro', active: true, introChar: 0 }
+let state = { page: 'intro', active: true, titleCardCharacter: 0 }
 
 const keys = { left: false, right: false, cheat: false, up: false, down: false, shoot: false, shootHit: false }
 
@@ -267,12 +269,22 @@ function loaded () {
 function tick () {
   frame = (++frame % 3600)
   if (state.page === 'intro') {
-    if (frame % 1 === 0) state.introChar++
+    if (frame % 1 === 0) state.titleCardCharacter++
     if (keys.shootHit) {
       if (state.active) {
-        state.introChar = Number.MAX_SAFE_INTEGER
+        state.titleCardCharacter = Number.MAX_SAFE_INTEGER
       } else {
-        state.page = 'inGame'
+        state.page = null
+      }
+    }
+    keys.shootHit = false
+  } else if (state.page === 'endCard') {
+    if (frame % 1 === 0) state.titleCardCharacter++
+    if (keys.shootHit) {
+      if (state.active) {
+        state.titleCardCharacter = Number.MAX_SAFE_INTEGER
+      } else {
+        // You can't advance past this screen
       }
     }
     keys.shootHit = false
@@ -420,6 +432,9 @@ function filterInPlace (a, condition) {
 function draw () {
   if (state.page === 'intro') {
     drawIntroCard()
+    return
+  } else if (state.page === 'endCard') {
+    drawEndCard()
     return
   }
   ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -601,6 +616,15 @@ function updatePlayer (player, isLocal) {
   if (keys.left) player.facingLeft = true
   if (keys.right) player.facingLeft = false
 
+  if (player.winner) {
+    player.winTimer++
+    if (player.winTimer > 60 * 5) {
+      state.page = 'endCard'
+      state.active = true
+      state.titleCardCharacter = 0
+    }
+  }
+
   updatePlayerAxis(player, 'x', keys.right, keys.left, skyXVel)
   player.pos.x += player.vel.x
 
@@ -637,7 +661,10 @@ function updatePlayer (player, isLocal) {
     if (player.winner) {
       spawnExplosion(player.pos)
     } else {
-      if (ents.length === 0) player.winner = true
+      if (ents.length === 0 && !player.winner) {
+        player.winner = true
+        player.winTimer = 0
+      }
     }
 
     camera.pos.x = player.pos.x
@@ -907,25 +934,60 @@ function restart () {
 
 restart()
 
-function drawIntroCard () {
+function cardSetup () {
   const tileSizePx = tileSize * scale
   ctx.fillStyle = '#140C1C'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
-  const pos = { x: tileSizePx * 1.5, y: tileSizePx * 1.5, charLimit: state.introChar, char: 0 }
+  const pos = { x: tileSizePx * 1.5, y: tileSizePx * 1.5, charLimit: state.titleCardCharacter, char: 0 }
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
-  printLine(pos, `Honey, we couldn't find a babysitter so you'll have to come\nto work with me.`)
+  return pos
+}
+
+function printCardTip (text) {
+  const tileSizePx = tileSize * scale
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'bottom'
+  printLine({ x: canvas.width - tileSizePx, y: canvas.height - tileSizePx, char: 0, charLimit: 9999 }, text, 'child')
+}
+
+function drawIntroCard () {
+  const pos = cardSetup()
+  printLine(pos, `Honey, I couldn't get a babysitter so you'll have to come\nto work with me.`)
   printLine(pos)
   printLine(pos, `Are we going in the spaceship?`, 'child')
   printLine(pos)
   printLine(pos, `Yes! We're going to go to an old factory, and I'll shoot\neverything that's in there. Then we can go get dinner.`)
   printLine(pos)
   printLine(pos, `Okay!`, 'child')
-  ctx.textAlign = 'right'
-  ctx.textBaseline = 'bottom'
   const hint = (pos.char > pos.charLimit) ? 'Press space bar to skip' : 'Press space bar'
   state.active = (pos.char > pos.charLimit)
-  printLine({ x: canvas.width - tileSizePx, y: canvas.height - tileSizePx, char: 0, charLimit: 9999 }, hint, 'child')
+  printCardTip(hint)
+}
+
+function drawEndCard () {
+  const pos = cardSetup()
+  printLine(pos, `Well, that's the last one. Let's go home!`)
+  printLine(pos)
+  printLine(pos, `...`, 'child')
+  printLine(pos); pos.y -= lineHeight * 2 // overwrite hacks
+  printLine(pos, `... Mum?`, 'child')
+  printLine(pos)
+  printLine(pos, `Yes?`)
+  printLine(pos)
+  printLine(pos, `Do you like cleaning factories?`, 'child')
+  printLine(pos)
+  printLine(pos, `...`)
+  printLine(pos); pos.y -= lineHeight * 2 // overwrite hacks
+  printLine(pos, `... well. It's not what I wanted to do when I was your age. But I like`)
+  printLine(pos, `having enough money to buy nice things, and send you to school. So`)
+  printLine(pos, `I guess I'm happy because my job gets us everything we need.`)
+  printLine(pos); pos.char += blankLineCharDelay * 2 // Slow down next line
+  printLine(pos, `I don't want to clean factories.`, 'child')
+  printLine(pos)
+  printLine(pos, `That's okay, Honey. You'll do something else.`)
+  state.active = (pos.char > pos.charLimit)
+  if (!state.active) printCardTip('___')
 }
 
 function printLine (pos, text, speaker) {
@@ -938,7 +1000,7 @@ function printLine (pos, text, speaker) {
     ctx.fillText(text.substr(0, pos.charLimit - pos.char), pos.x, pos.y)
     pos.char += text.length
   } else {
-    pos.char += 130 // delay for blank lines
+    pos.char += blankLineCharDelay
   }
-  pos.y += 32
+  pos.y += lineHeight
 }

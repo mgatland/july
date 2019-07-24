@@ -1004,7 +1004,7 @@ function drawCardBorder () {
 
 function drawEndCard () {
   const pos = cardSetup()
-  printLine(pos, `That's the last one. Let's go home!`)
+  printLine(pos, `That's the last one. Let's go home.`)
   printLine(pos)
   printLine(pos, `...`, 'child')
   printLine(pos); pos.y -= lineHeight * 2 // overwrite hacks

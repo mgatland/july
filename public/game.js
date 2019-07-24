@@ -153,6 +153,7 @@ class SignPost extends Enemy {
     this.sprite = 17
     this.hurtsOnTouch = false
     this.isSign = true
+    this.deadEffect = 'spawnerDeadRing'
   }
   move () {
     super.move()

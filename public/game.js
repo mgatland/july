@@ -2,6 +2,8 @@
 'use strict'
 
 import { editor } from './editor.js'
+import { playSound } from './sounds.js'
+let audioInitialized = false
 
 const smallSprite = 24
 const fontSize = 24
@@ -82,10 +84,12 @@ class Enemy {
     if (this.fireTimer > 0) this.fireTimer--
     if (this.fireTimer === 0 && this.refireRate > 0) {
       spawnShot(this)
+      playSound('enemyshoot')
       this.fireTimer = this.refireRate
     }
-    if (this.hurtsOnTouch && distance(this.pos, player.pos) < tileSize) {
+    if (!player.dead && this.hurtsOnTouch && distance(this.pos, player.pos) < tileSize) {
       if (!player.winner) hurt(player, 10)
+      playSound('playerhit')
       hurt(this, 9000)
     }
   }
@@ -332,8 +336,10 @@ function hurt (ent, amount) {
     ent.dead = true
     if (ent.isPlayer) {
       spawnExplosion(ent.pos, 'playerDeadRing')
+      playSound('playerexp')
     } else {
       spawnExplosion(ent.pos, ent.deadEffect)
+      playSound('exp2')
     }
   }
 }
@@ -346,6 +352,8 @@ function updateShots () {
 
     if (shot.hurtsPlayer && isTouching(shot, player)) {
       hurt(player, 10)
+      playSound('playerhit')
+      playSound('exp')
       spawnExplosion(shot.pos)
       shot.dead = true
       continue
@@ -355,6 +363,7 @@ function updateShots () {
       for (const ent of ents) {
         if (isTouching(shot, ent)) {
           hurt(ent, 10)
+          playSound('hit2')
           spawnExplosion(shot.pos)
           shot.dead = true
           continue
@@ -672,6 +681,7 @@ function updatePlayer (player, isLocal) {
 
     if (keys.shoot && player.fireTimer === 0 && player.ammo > 0) {
       spawnShot(player)
+      playSound('shoot')
       player.fireTimer = player.refireRate
       // player.ammo--
     }
@@ -687,6 +697,7 @@ function updatePlayer (player, isLocal) {
 
         player.health = player.maxHealth
         player.healthBarFlashTimer = 120
+        playSound('heal')
 
         /* // Did I win?
         if (checkpoints.every(cp => player.checkpoints[cp.id])) {
@@ -859,6 +870,10 @@ function switchKey (key, state) {
 window.addEventListener('keydown', function (e) {
   const preventDefault = switchKey(e.key, true)
   if (preventDefault) e.preventDefault()
+  if (!audioInitialized) {
+    playSound('silence') // Unblocks the audio API. This is silly! Why did you do this, Chrome et al?
+    audioInitialized = true
+  }
 })
 
 window.addEventListener('keyup', function (e) {
@@ -996,7 +1011,7 @@ function drawEndCard () {
   printLine(pos); pos.char += blankLineCharDelay * 2 // Slow down next line
   printLine(pos, `I don't want to clean factories.`, 'child')
   printLine(pos)
-  printLine(pos, `That's okay, Honey. You'll do something else.`)
+  printLine(pos, `That's okay, honey. You'll do something else.`)
   pos.char += blankLineCharDelay * 2 // Extra delay before the end message
   state.active = (pos.char > pos.charLimit)
   if (!state.active) printCardTip('END')

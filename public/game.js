@@ -87,7 +87,7 @@ class Enemy {
       playSound('enemyshoot')
       this.fireTimer = this.refireRate
     }
-    if (!player.dead && this.hurtsOnTouch && distance(this.pos, player.pos) < tileSize) {
+    if (!player.dead && this.hurtsOnTouch && isTouching(this, player)) {
       if (!player.winner) hurt(player, 10)
       playSound('playerhit')
       hurt(this, 9000)
@@ -308,7 +308,9 @@ function tick () {
 }
 
 function isTouching (ent1, ent2) {
-  return distance(ent1.pos, ent2.pos) < tileSize
+  // Very dirty hack to handle the player being smaller than other sprites.
+  const dist = (ent1 === player || ent2 === player) ? tileSize / 2 : tileSize
+  return distance(ent1.pos, ent2.pos) < dist
 }
 
 function distance (pos1, pos2) {

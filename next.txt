@@ -9,9 +9,7 @@ Updates after the game jam:
   when the countdown expires, bring up a new text card
 [x] change ship color
 [x] space ship sprite on main screen
-
-[ ] sound and music
-	[ ] descending 
+[x] sound
 
 [ ] remove multiplayer 'ghosts
 

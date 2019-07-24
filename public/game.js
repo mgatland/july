@@ -948,7 +948,7 @@ function printCardTip (text) {
   const tileSizePx = tileSize * scale
   ctx.textAlign = 'right'
   ctx.textBaseline = 'bottom'
-  printLine({ x: canvas.width - tileSizePx, y: canvas.height - tileSizePx, char: 0, charLimit: 9999 }, text, 'child')
+  printLine({ x: canvas.width - tileSizePx, y: canvas.height - tileSizePx * 1.5, char: 0, charLimit: 9999 }, text, 'child')
 }
 
 function drawIntroCard () {
@@ -963,18 +963,29 @@ function drawIntroCard () {
   const hint = (pos.char > pos.charLimit) ? 'Press space bar to skip' : 'Press space bar'
   state.active = (pos.char > pos.charLimit)
   printCardTip(hint)
+  // Draw player ship
+  drawSprite(5, canvas.width * 1 / 3, canvas.height * 3 / 4, false, true)
+  drawCardBorder()
+}
+
+function drawCardBorder () {
+  const tileSizePx = tileSize * scale
+  for (let x = 0; x < canvas.width / tileSizePx; x++) {
+    drawSprite(23, (x + 0.5) * tileSizePx, tileSizePx / 2, false, true)
+    drawSprite(23, (x + 0.5) * tileSizePx, canvas.height - tileSizePx / 2, false, true)
+  }
 }
 
 function drawEndCard () {
   const pos = cardSetup()
-  printLine(pos, `Well, that's the last one. Let's go home!`)
+  printLine(pos, `That's the last one. Let's go home!`)
   printLine(pos)
   printLine(pos, `...`, 'child')
   printLine(pos); pos.y -= lineHeight * 2 // overwrite hacks
   printLine(pos, `... Mum?`, 'child')
-  printLine(pos)
+  printLine(pos); pos.char -= blankLineCharDelay / 2 // Speed up this wait since there was so little text
   printLine(pos, `Yes?`)
-  printLine(pos)
+  printLine(pos); pos.char -= blankLineCharDelay / 2 // Speed up this wait since there was so little text
   printLine(pos, `Do you like cleaning factories?`, 'child')
   printLine(pos)
   printLine(pos, `...`)
@@ -986,8 +997,10 @@ function drawEndCard () {
   printLine(pos, `I don't want to clean factories.`, 'child')
   printLine(pos)
   printLine(pos, `That's okay, Honey. You'll do something else.`)
+  pos.char += blankLineCharDelay * 2 // Extra delay before the end message
   state.active = (pos.char > pos.charLimit)
-  if (!state.active) printCardTip('___')
+  if (!state.active) printCardTip('END')
+  drawCardBorder()
 }
 
 function printLine (pos, text, speaker) {
@@ -999,8 +1012,13 @@ function printLine (pos, text, speaker) {
     ctx.fillStyle = (speaker === 'child') ? '#deeed6' : '#dad45e'
     ctx.fillText(text.substr(0, pos.charLimit - pos.char), pos.x, pos.y)
     pos.char += text.length
+    pos.y += lineHeight
   } else {
     pos.char += blankLineCharDelay
+    pos.y += lineHeight
+    if (state.page === 'endCard') {
+      //Hack to make the end page fit: blank lines are narrower
+      pos.y -= 2
+    }
   }
-  pos.y += lineHeight
 }

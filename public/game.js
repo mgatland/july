@@ -99,7 +99,7 @@ class Enemy {
       angle = getAngle(this.pos, player.pos)
     } else {
       angle = Math.random() * Math.PI * 2
-    } 
+    }
 
     const speed = 0.6
     this.vel.x = Math.cos(angle) * speed
@@ -107,7 +107,7 @@ class Enemy {
     this.moveTimer = this.maxMoveTimer
   }
   inActiveRange () {
-    return distance(this.pos, player.pos) < tileSize * 7
+    return distance(this.pos, player.pos) < tileSize * 9
   }
   draw () {
     drawSprite(this.sprite, this.pos.x, this.pos.y)
@@ -380,7 +380,7 @@ function updateShots () {
           continue
         }
       }
-      if (shot.age > tileSize * 8 / Math.abs(shot.vel.x)) {
+      if (shot.age > tileSize * 7 / Math.abs(shot.vel.x)) {
         spawnExplosion(shot.pos)
         shot.dead = true
         continue
